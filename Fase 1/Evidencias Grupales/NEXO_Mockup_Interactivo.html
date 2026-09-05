@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>NEXO — Prototipo interactivo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --deep: #065A82;
+    --teal: #1C7293;
+    --midnight: #17203E;
+    --ice: #EAF2F6;
+    --coral: #F96167;
+    --ink: #1B2430;
+    --mute: #6C7A89;
+    --white: #FFFFFF;
+    --green: #2C8C5A;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: radial-gradient(circle at 20% 15%, #1c2b52 0%, #0e1530 55%, #0a0f24 100%);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  .page {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px 64px;
+  }
+
+  .page-header { text-align: center; margin-bottom: 6px; }
+  .page-header .brand {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 34px; font-weight: 700; color: #fff; letter-spacing: 1px; margin: 0;
+  }
+  .page-header .tagline {
+    color: #9db3d6; font-size: 14px; margin: 6px 0 0; font-style: italic;
+  }
+
+  .layout {
+    display: flex; align-items: flex-start; gap: 46px;
+    margin-top: 40px; flex-wrap: wrap; justify-content: center;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    width: 230px; color: #cfe0f4;
+  }
+  .sidebar h3 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: #6f88b8; margin: 0 0 12px; font-weight: 600;
+  }
+  .nav-list { list-style: none; margin: 0 0 28px; padding: 0; }
+  .nav-list li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px; cursor: pointer;
+    font-size: 14px; margin-bottom: 4px; transition: background .15s ease;
+    border: 1px solid transparent;
+  }
+  .nav-list li:hover { background: rgba(255,255,255,0.06); }
+  .nav-list li.active {
+    background: rgba(28,114,147,0.35); border-color: rgba(107,196,230,0.4); color: #fff; font-weight: 600;
+  }
+  .nav-list .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #4a5f8a; flex-shrink: 0;
+  }
+  .nav-list li.active .dot { background: #6bc4e6; }
+
+  .reset-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.06); color: #cfe0f4; border: 1px solid rgba(255,255,255,0.15);
+    padding: 9px 14px; border-radius: 9px; font-size: 12.5px; cursor: pointer;
+    transition: background .15s ease;
+  }
+  .reset-btn:hover { background: rgba(255,255,255,0.12); }
+
+  .hint-box {
+    margin-top: 24px; font-size: 12px; line-height: 1.5; color: #8ba1c8;
+    border-left: 2px solid #2c3f68; padding-left: 12px;
+  }
+
+  /* ---------- Phone ---------- */
+  .phone-bezel {
+    width: 320px; height: 660px;
+    background: linear-gradient(160deg, #232f4f, #10182e);
+    border-radius: 42px; padding: 12px;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.06);
+    position: relative;
+  }
+  .phone-notch {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 20px; background: #10182e; border-radius: 0 0 14px 14px; z-index: 5;
+  }
+  .phone-screen {
+    width: 100%; height: 100%; background: var(--white);
+    border-radius: 30px; overflow: hidden; position: relative;
+  }
+
+  .screen {
+    position: absolute; inset: 0;
+    display: none; flex-direction: column;
+    opacity: 0; transform: translateY(6px);
+    transition: opacity .22s ease, transform .22s ease;
+  }
+  .screen.active { display: flex; opacity: 1; transform: translateY(0); }
+
+  .statusbar {
+    height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; font-size: 12px; font-weight: 600; color: var(--ink);
+  }
+  .statusbar .icons { display: flex; gap: 5px; align-items: center; }
+  .bar { display: flex; gap: 2px; align-items: flex-end; height: 9px; }
+  .bar span { width: 3px; background: var(--ink); border-radius: 1px; }
+  .bar span:nth-child(1){height:4px;} .bar span:nth-child(2){height:6px;}
+  .bar span:nth-child(3){height:8px;} .bar span:nth-child(4){height:9px;}
+  .battery { width: 20px; height: 10px; border: 1.4px solid var(--ink); border-radius: 2px; position: relative; }
+  .battery::after { content:""; position:absolute; right:-4px; top:2.5px; width:2px; height:5px; background:var(--ink); border-radius:1px;}
+  .battery::before { content:""; position:absolute; top:1px; left:1px; bottom:1px; width:70%; background:var(--ink); border-radius:1px; }
+
+  .screen-body { flex: 1; overflow-y: auto; padding: 18px 20px 90px; }
+  .screen-body::-webkit-scrollbar { display: none; }
+
+  /* ---------- Splash ---------- */
+  #screen-splash { background: linear-gradient(150deg, var(--midnight), var(--deep)); justify-content: center; align-items: center; cursor: pointer; }
+  #screen-splash .logo-circle {
+    width: 74px; height: 74px; border-radius: 50%; background: var(--teal);
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid rgba(255,255,255,0.5); margin-bottom: 18px;
+  }
+  #screen-splash .logo-circle svg { width: 34px; height: 34px; }
+  #screen-splash h1 { font-family: Georgia, serif; color: #fff; font-size: 34px; margin: 0; letter-spacing: 1px; }
+  #screen-splash p { color: #bcd3ea; font-size: 12.5px; margin-top: 40px; letter-spacing: .5px; }
+
+  /* ---------- Onboarding ---------- */
+  .onb-title { font-family: Georgia, serif; font-size: 22px; margin: 6px 0 4px; }
+  .onb-sub { color: var(--mute); font-size: 13px; margin: 0 0 22px; line-height: 1.5; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 11.5px; color: var(--mute); margin-bottom: 6px; font-weight: 600; }
+  .field input {
+    width: 100%; padding: 11px 12px; border-radius: 10px; border: 1.5px solid #dbe6ee;
+    font-size: 14px; background: var(--ice); color: var(--ink); font-family: inherit;
+  }
+  .field input:focus { outline: none; border-color: var(--teal); }
+
+  .btn-primary {
+    width: 100%; background: var(--deep); color: #fff; border: none; border-radius: 12px;
+    padding: 13px; font-size: 14.5px; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: background .15s ease;
+  }
+  .btn-primary:hover { background: var(--teal); }
+  .btn-primary:disabled { background: #b8c6d3; cursor: not-allowed; }
+  .btn-secondary {
+    width: 100%; background: transparent; color: var(--deep); border: 1.5px solid var(--deep);
+    border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+
+  /* ---------- PIN screen ---------- */
+  #screen-pin .screen-body { display: flex; flex-direction: column; align-items: center; padding-top: 40px; }
+  #pin-icon { width: 46px; height: 46px; border-radius: 50%; background: var(--ice); display:flex; align-items:center; justify-content:center; margin-bottom: 16px;}
+  #pin-title { font-family: Georgia, serif; font-size: 20px; margin: 0 0 4px; text-align: center; }
+  #pin-sub { color: var(--mute); font-size: 12.5px; margin: 0 0 26px; text-align: center; }
+  .pin-dots { display: flex; gap: 14px; margin-bottom: 34px; }
+  .pin-dots span {
+    width: 15px; height: 15px; border-radius: 50%; border: 1.6px solid #c3d2de; transition: all .15s ease;
+  }
+  .pin-dots span.filled { background: var(--deep); border-color: var(--deep); }
+  .pin-dots.shake { animation: shake .35s; }
+  @keyframes shake {
+    25% { transform: translateX(-8px); } 75% { transform: translateX(8px); }
+  }
+  .keypad {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; width: 100%; max-width: 220px;
+  }
+  .key {
+    aspect-ratio: 1; border-radius: 50%; border: 1.5px solid #e1e9ef; background: #fff;
+    font-size: 18px; font-weight: 600; color: var(--ink); cursor: pointer; display:flex; align-items:center; justify-content:center;
+    transition: background .12s ease;
+  }
+  .key:hover { background: var(--ice); }
+  .key.ghost { border: none; background: transparent; cursor: default; }
+  .key.del { font-size: 13px; color: var(--coral); border: none; }
+  #pin-error { color: var(--coral); font-size: 12px; height: 16px; margin-top: 10px; text-align:center; }
+
+  /* ---------- Permisos ---------- */
+  .perm-icon-wrap { width: 64px; height: 64px; border-radius: 18px; background: var(--ice); display: flex; align-items: center; justify-content: center; margin: 10px auto 20px; }
+  .perm-card {
+    background: var(--ice); border-radius: 14px; padding: 16px; display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 22px;
+  }
+  .perm-card .label { font-size: 13.5px; font-weight: 600; }
+  .perm-card .sub { font-size: 11px; color: var(--mute); margin-top: 2px; }
+  .status-pill {
+    font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 20px;
+    background: #fde3d3; color: #b45309;
+  }
+  .status-pill.on { background: #d7f3e3; color: var(--green); }
+
+  /* ---------- Home ---------- */
+  .greeting { font-size: 12px; color: var(--mute); margin-bottom: 2px; }
+  .greeting-name { font-family: Georgia, serif; font-size: 21px; margin: 0 0 18px; }
+  .journey-card {
+    background: linear-gradient(135deg, var(--deep), var(--midnight));
+    border-radius: 16px; padding: 18px; color: #fff; cursor: pointer; margin-bottom: 18px;
+    transition: transform .12s ease;
+  }
+  .journey-card:hover { transform: translateY(-2px); }
+  .journey-card .jtitle { font-size: 13.5px; opacity: .85; margin-bottom: 4px; }
+  .journey-card .jtime { font-family: Georgia, serif; font-size: 22px; margin-bottom: 10px; }
+  .journey-card .jstatus { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .journey-card .jstatus .pulse { width: 7px; height: 7px; border-radius: 50%; background: #6bffa0; }
+
+  .section-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--mute); margin: 4px 0 10px; }
+  .mini-row { display: flex; gap: 10px; margin-bottom: 18px; }
+  .mini-card { flex: 1; background: var(--ice); border-radius: 12px; padding: 12px; text-align: center; }
+  .mini-card .val { font-family: Georgia, serif; font-size: 18px; color: var(--deep); }
+  .mini-card .lab { font-size: 10.5px; color: var(--mute); margin-top: 2px; }
+
+  /* ---------- Actividad ---------- */
+  .app-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #eef2f5; }
+  .app-badge {
+    width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 13px; flex-shrink: 0;
+  }
+  .app-info { flex: 1; }
+  .app-info .name { font-size: 13.5px; font-weight: 600; }
+  .app-info .cat { font-size: 10.5px; color: var(--mute); margin-top: 1px; }
+  .app-time { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+
+  /* ---------- Estadisticas ---------- */
+  .bar-row { margin-bottom: 16px; }
+  .bar-row .top { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 6px; }
+  .bar-row .top .name { font-weight: 600; }
+  .bar-track { height: 9px; border-radius: 5px; background: var(--ice); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 5px; width: 0; transition: width .7s ease; }
+  .donut-wrap { display:flex; justify-content:center; margin: 6px 0 22px; }
+
+  /* ---------- Horarios ---------- */
+  .schedule-card {
+    background: var(--ice); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .schedule-card .sname { font-size: 13.5px; font-weight: 700; }
+  .schedule-card .stime { font-size: 11.5px; color: var(--mute); margin-top: 2px; }
+  .add-schedule-btn {
+    width: 100%; border: 1.5px dashed #b9cddb; background: transparent; border-radius: 14px;
+    padding: 14px; color: var(--deep); font-weight: 700; font-size: 13.5px; cursor: pointer; font-family: inherit;
+    margin-top: 4px;
+  }
+  .add-schedule-btn:hover { background: var(--ice); }
+
+  /* ---------- Config ---------- */
+  .settings-row {
+    display: flex; align-items: center; gap: 13px; padding: 13px 0; border-bottom: 1px solid #eef2f5; cursor: pointer;
+  }
+  .settings-row:hover { background: #fafcfd; }
+  .settings-icon {
+    width: 34px; height: 34px; border-radius: 9px; background: var(--ice); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .settings-row .label { flex: 1; font-size: 13.5px; font-weight: 600; }
+  .chev { color: #c2ccd4; font-size: 15px; }
+
+  /* ---------- Bottom nav ---------- */
+  .bottomnav {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 66px; background: #fff;
+    border-top: 1px solid #eef2f5; display: none; align-items: center; justify-content: space-around;
+    padding-bottom: 6px;
+  }
+  .navitem { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; color: #a8b4be; }
+  .navitem.active { color: var(--deep); }
+  .navitem span { font-size: 9.5px; font-weight: 600; }
+
+  /* ---------- Modal (crear jornada) ---------- */
+  .modal-backdrop {
+    position: absolute; inset: 0; background: rgba(10,15,30,0.45);
+    display: none; align-items: flex-end; z-index: 30;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-sheet {
+    background: #fff; width: 100%; border-radius: 20px 20px 0 0; padding: 22px 20px 26px;
+    transform: translateY(100%); transition: transform .25s ease;
+  }
+  .modal-backdrop.open .modal-sheet { transform: translateY(0); }
+  .modal-sheet h3 { font-family: Georgia, serif; margin: 0 0 16px; font-size: 18px; }
+  .day-chips { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+  .day-chip {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--ice); display: flex; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 700; cursor: pointer; color: var(--mute);
+  }
+  .day-chip.on { background: var(--deep); color: #fff; }
+  .time-row { display: flex; gap: 12px; }
+  .time-row .field { flex: 1; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: absolute; bottom: 84px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--midnight); color: #fff; padding: 10px 18px; border-radius: 30px; font-size: 12.5px;
+    opacity: 0; pointer-events: none; transition: all .25s ease; z-index: 40; white-space: nowrap;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 620px) {
+    .layout { flex-direction: column; align-items: center; }
+    .sidebar { order: 2; width: 300px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="page-header">
+    <p class="brand">NEXO</p>
+    <p class="tagline">Prototipo interactivo — haz clic dentro de la pantalla como si fuera la app real</p>
+  </div>
+
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <h3>Explorar pantallas</h3>
+      <ul class="nav-list" id="nav-list">
+        <li data-target="home"><span class="dot"></span> Inicio</li>
+        <li data-target="activity"><span class="dot"></span> Actividad</li>
+        <li data-target="stats"><span class="dot"></span> Estadísticas</li>
+        <li data-target="schedule"><span class="dot"></span> Horarios</li>
+        <li data-target="settings"><span class="dot"></span> Configuración</li>
+      </ul>
+      <button class="reset-btn" onclick="restartFlow()">↺ Reiniciar flujo de bienvenida</button>
+      <div class="hint-box">
+        El flujo completo (Splash → Bienvenida → Crear PIN → Permisos → Inicio) se recorre tocando los botones dentro del teléfono, igual que en la app real.
+      </div>
+    </div>
+
+    <!-- PHONE -->
+    <div class="phone-bezel">
+      <div class="phone-notch"></div>
+      <div class="phone-screen" id="phone-screen">
+
+        <!-- SPLASH -->
+        <div class="screen active" id="screen-splash" onclick="showScreen('onboarding')">
+          <div class="logo-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg>
+          </div>
+          <h1>NEXO</h1>
+          <p>Toca para continuar</p>
+        </div>
+
+        <!-- ONBOARDING -->
+        <div class="screen" id="screen-onboarding">
+          <div class="statusbar"><span>08:23</span><div class="icons"><div class="bar"><span></span><span></span><span></span><span></span></div><div class="battery"></div></div></div>
+          <div class="screen-body">
+            <p class="onb-title">Bienvenido</p>
+            <p class="onb-sub">Configura la supervisión digital de tu hogar en un par de minutos.</p>
+            <div class="field"><label>Nombre del apoderado</label><input placeholder="Ej. María Contreras"></div>
+            <div class="field"><label>Correo electrónico</label><input placeholder="maria@correo.cl"></div>
+            <button class="btn-primary" style="margin-top:8px" onclick="startPinFlow('create', () => showScreen('permisos'))">Continuar</button>
+          </div>
+        </div>
+
+        <!-- PIN (compartida: crear / confirmar / verificar) -->
+        <div class="screen" id="screen-pin">
+          <div class="statusbar"><span>08:23</span><div class="icons"><div class="bar"><span></span><span></span><span></span><span></span></div><div class="battery"></div></div></div>
+          <div class="screen-body">
+            <div id="pin-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#065A82" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            </div>
+            <p id="pin-title">Crear PIN</p>
+            <p id="pin-sub">Ingresa un PIN de 4 dígitos</p>
+            <div class="pin-dots" id="pin-dots"><span></span><span></span><span></span><span></span></div>
+            <div id="pin-error"></div>
+            <div class="keypad" id="keypad"></div>
+          </div>
+        </div>
+
+        <!-- PERMISOS -->
+        <div class="screen" id="screen-permisos">
+          <div class="statusbar"><span>08:24</span><div class="icons"><div class="bar"><span></span><span></span><span></span><span></span></div><div class="battery"></div></div></div>
+          <div class="screen-body">
+            <div class="perm-icon-wrap">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#065A82" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+            </div>
+            <p class="onb-title" style="text-align:center">Permisos necesarios</p>
+            <p class="onb-sub" style="text-align:center">Para obtener estadísticas de uso, NEXO necesita el acceso especial de Android:</p>
+            <div class="perm-card">
+              <div><div class="label">Acceso a datos de uso</div><div class="sub">Usage Access</div></div>
+              <div class="status-pill" id="perm-pill">Pendiente</div>
+            </div>
+            <button class="btn-primary" id="perm-btn" onclick="grantPermission()">Ir a configuración</button>
+            <button class="btn-primary" id="perm-continue" style="display:none; margin-top:10px; background:var(--green)" onclick="showScreen('home')">Continuar</button>
+          </div>
+        </div>
+
+        <!-- HOME -->
+        <div class="screen" id="screen-home">
+          <div class="statusbar"><span>08:31</span><div class="icons"><div class="bar"><span></span><span></span><span></span><span></span></div><div class="battery"></div></div></div>
+          <div class="screen-body">
+            <p class="greeting">Buenos días</p>
+            <p class="greeting-name">María 👋</p>
+            <div class="journey-card" onclick="showScreen('activity')">
+              <div class="jtitle">🏫 Jornada escolar</div>
+              <div class="jtime">08:00 — 14:00</div>
+              <div class="jstatus"><span class="pulse"></span> ACTIVA</div>
+            </div>
+            <p class="section-label">Resumen de hoy</p>
+            <div class="mini-row">
+              <div class="mini-card"><div class="val">1h 24m</div><div class="lab">Tiempo total</div></div>
+              <div class="mini-card"><div class="val">50m</div><div class="lab">Educación</div></div>
+              <div class="mini-card"><div class="val">21m</div><div class="lab">Entreten.</div></div>
+            </div>
+            <p class="section-label">Acceso rápido</p>
+            <div class="settings-row" onclick="showScreen('schedule')">
+              <div class="settings-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#065A82" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+              <div class="label">Ver mis jornadas</div><span class="chev">›</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIVIDAD -->
+        <div class="screen" id="screen-activity">
+          <div class="statusbar"><span>08:31</span><div class="icons"><div class="bar"><span></span><span></span><span></span><span></span></div><div class="battery"></div></div></div>
+          <div class="screen-body">
+            <p class="onb-title">Actividad</p>
+            <p class="onb-sub">Jornada escolar · 08:00–14:00</p>
+            <div class="app-row">
+              <div class="app-badge" style="background:#065A82">C</div>
+              <div class="app-info"><div class="name">Chrome</div><div class="cat">Navegación</div></div>
+              <div class="app-time">42 min</div>
+            </div>
+            <div class="app-row">
+              <div class="app-badge" style="background:#F96167">Y</div>
+              <div class="app-info"><div class="name">YouTube</div><div class="cat">Entretenimiento</div></div>
+              <div class="app-time">21 min</div>
+            </div>
+            <div class="app-row">
+              <div class="app-badge" style="background:#2C8C5A">W</div>
+              <div class="app-info"><div class="name">WhatsApp</div><div class="cat">Comunicación</div></div>
+              <div class="app-time">13 min</div>
+            </div>
+            <div class="app-row">
+              <div class="app-badge" style="background:#1C7293">Cc</div>
+              <div class="app-info"><div class="name">Calculadora</div><div class="cat">Educación</div></div>
+              <div class="app-time">8 min</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ESTADISTICAS -->
+        <div class="screen" id="screen-stats">
+          <div class="statusbar"><span>08:31</span><div class="icons"><div class="bar"><span></span><span></span><span></span><span></span></div><div class="battery"></div></div></div>
+          <div class="screen-body">
+            <p class="onb-title">Estadísticas</p>
+            <p class="onb-sub">Distribución por categoría — jornada de hoy</p>
+            <div class="bar-row">
+              <div class="top"><span class="name">Educación</span><span>50 min</span></div>
+              <div class="bar-track"><div class="bar-fill" id="bar1" style="background:#065A82"></div></div>
+            </div>
+            <div class="bar-row">
+              <div class="top"><span class="name">Comunicación</span><span>13 min</span></div>
+              <div class="bar-track"><div class="bar-fill" id="bar2" style="background:#1C7293"></div></div>
+            </div>
+            <div class="bar-row">
+              <div class="top"><span class="name">Entretenimiento</span><span>21 min</span></div>
+              <div class="bar-track"><div class="bar-fill" id="bar3" style="background:#F96167"></div></div>
+            </div>
+            <p class="section-label">Semana</p>
+            <div class="mini-row">
+              <div class="mini-card"><div class="val">Lun</div><div class="lab">2h 10m</div></div>
+              <div class="mini-card"><div class="val">Mar</div><div class="lab">1h 42m</div></div>
+              <div class="mini-card"><div class="val">Mié</div><div class="lab">2h 20m</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HORARIOS -->
+        <div class="screen" id="screen-schedule">
+          <div class="statusbar"><span>08:31</span><div class="icons"><div class="bar"><span></span><span></span><span></span><span></span></div><div class="battery"></div></div></div>
+          <div class="screen-body">
+            <p class="onb-title">Mis jornadas</p>
+            <p class="onb-sub">Períodos de supervisión configurados</p>
+            <div id="schedule-list">
+              <div class="schedule-card"><div><div class="sname">🏫 Jornada escolar</div><div class="stime">Lun–Vie · 08:00–14:00</div></div><span class="chev">›</span></div>
+              <div class="schedule-card"><div><div class="sname">📚 Estudio</div><div class="stime">Lun–Vie · 17:00–19:00</div></div><span class="chev">›</span></div>
+            </div>
+            <button class="add-schedule-btn" onclick="openModal()">+ Crear jornada</button>
+          </div>
+
+          <!-- MODAL crear jornada -->
+          <div class="modal-backdrop" id="modal-backdrop">
+            <div class="modal-sheet">
+              <h3>Nueva jornada</h3>
+              <div class="field"><label>Nombre</label><input id="new-name" placeholder="Ej. Horario nocturno"></div>
+              <div class="time-row">
+                <div class="field"><label>Hora inicio</label><input id="new-start" placeholder="08:00"></div>
+                <div class="field"><label>Hora término</label><input id="new-end" placeholder="14:00"></div>
+              </div>
+              <label style="display:block; font-size:11.5px; color:var(--mute); margin-bottom:8px; font-weight:600;">Días</label>
+              <div class="day-chips">
+                <div class="day-chip on">L</div><div class="day-chip on">M</div><div class="day-chip on">M</div>
+                <div class="day-chip on">J</div><div class="day-chip on">V</div><div class="day-chip">S</div><div class="day-chip">D</div>
+              </div>
+              <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveSchedule()">Guardar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONFIGURACION -->
+        <div class="screen" id="screen-settings">
+          <div class="statusbar"><span>08:31</span><div class="icons"><div class="bar"><span></span><span></span><span></span><span></span></div><div class="battery"></div></div></div>
+          <div class="screen-body">
+            <p class="onb-title">Configuración</p>
+            <div class="settings-row" onclick="startPinFlow('verify', () => showToast('PIN actualizado ✓'))">
+              <div class="settings-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#065A82" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+              <div class="label">Cambiar PIN</div><span class="chev">›</span>
+            </div>
+            <div class="settings-row">
+              <div class="settings-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#065A82" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></div>
+              <div class="label">Correo del apoderado</div><span class="chev">›</span>
+            </div>
+            <div class="settings-row">
+              <div class="settings-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#065A82" stroke-width="2"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></div>
+              <div class="label">Aplicaciones supervisadas</div><span class="chev">›</span>
+            </div>
+            <div class="settings-row" onclick="showScreen('schedule')">
+              <div class="settings-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#065A82" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+              <div class="label">Horarios</div><span class="chev">›</span>
+            </div>
+            <div class="settings-row">
+              <div class="settings-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#065A82" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg></div>
+              <div class="label">Acerca de NEXO</div><span class="chev">›</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom nav (compartido, se muestra/oculta segun pantalla) -->
+        <div class="bottomnav" id="bottomnav">
+          <div class="navitem" data-target="home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Inicio</span></div>
+          <div class="navitem" data-target="activity"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9M12 19V5M20 19v-7"/></svg><span>Actividad</span></div>
+          <div class="navitem" data-target="stats"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg><span>Stats</span></div>
+          <div class="navitem" data-target="schedule"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Horarios</span></div>
+          <div class="navitem" data-target="settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.6V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.6 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.6 1z"/></svg><span>Ajustes</span></div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TABS = ['home','activity','stats','schedule','settings'];
+const NO_NAV_SCREENS = ['splash','onboarding','pin','permisos'];
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+
+  const bottomnav = document.getElementById('bottomnav');
+  if (TABS.includes(id)) {
+    bottomnav.style.display = 'flex';
+    document.querySelectorAll('.navitem').forEach(n => n.classList.toggle('active', n.dataset.target === id));
+  } else {
+    bottomnav.style.display = 'none';
+  }
+
+  document.querySelectorAll('#nav-list li').forEach(li => li.classList.toggle('active', li.dataset.target === id));
+
+  if (id === 'stats') animateBars();
+}
+
+document.querySelectorAll('.navitem').forEach(item => {
+  item.addEventListener('click', () => showScreen(item.dataset.target));
+});
+document.querySelectorAll('#nav-list li').forEach(li => {
+  li.addEventListener('click', () => showScreen(li.dataset.target));
+});
+
+function restartFlow() {
+  closeModal();
+  document.getElementById('perm-pill').textContent = 'Pendiente';
+  document.getElementById('perm-pill').classList.remove('on');
+  document.getElementById('perm-btn').style.display = 'block';
+  document.getElementById('perm-continue').style.display = 'none';
+  showScreen('splash');
+}
+
+/* ---------------- PIN FLOW ---------------- */
+let pinState = { mode: 'create', buffer: [], firstPin: '', onComplete: null };
+
+function buildKeypad() {
+  const layout = ['1','2','3','4','5','6','7','8','9','','0','del'];
+  const kp = document.getElementById('keypad');
+  kp.innerHTML = '';
+  layout.forEach(k => {
+    const btn = document.createElement('div');
+    if (k === '') { btn.className = 'key ghost'; }
+    else if (k === 'del') { btn.className = 'key del'; btn.textContent = '⌫'; btn.onclick = () => pinBackspace(); }
+    else { btn.className = 'key'; btn.textContent = k; btn.onclick = () => pinPress(k); }
+    kp.appendChild(btn);
+  });
+}
+buildKeypad();
+
+function startPinFlow(mode, onComplete) {
+  pinState = { mode, buffer: [], firstPin: '', onComplete };
+  updatePinScreenText();
+  renderDots();
+  document.getElementById('pin-error').textContent = '';
+  showScreen('pin');
+}
+
+function updatePinScreenText() {
+  const titleEl = document.getElementById('pin-title');
+  const subEl = document.getElementById('pin-sub');
+  if (pinState.mode === 'create') { titleEl.textContent = 'Crear PIN'; subEl.textContent = 'Ingresa un PIN de 4 dígitos'; }
+  else if (pinState.mode === 'confirm') { titleEl.textContent = 'Confirmar PIN'; subEl.textContent = 'Ingresa nuevamente el PIN'; }
+  else { titleEl.textContent = 'Verificar PIN'; subEl.textContent = 'Ingresa tu PIN actual para continuar'; }
+}
+
+function renderDots() {
+  const dots = document.querySelectorAll('#pin-dots span');
+  dots.forEach((d, i) => d.classList.toggle('filled', i < pinState.buffer.length));
+}
+
+function pinPress(digit) {
+  if (pinState.buffer.length >= 4) return;
+  pinState.buffer.push(digit);
+  renderDots();
+  if (pinState.buffer.length === 4) setTimeout(handlePinComplete, 250);
+}
+function pinBackspace() {
+  pinState.buffer.pop();
+  renderDots();
+}
+
+function handlePinComplete() {
+  const entered = pinState.buffer.join('');
+  if (pinState.mode === 'create') {
+    pinState.firstPin = entered;
+    pinState.buffer = [];
+    pinState.mode = 'confirm';
+    updatePinScreenText();
+    renderDots();
+  } else if (pinState.mode === 'confirm') {
+    if (entered === pinState.firstPin) {
+      const cb = pinState.onComplete;
+      cb && cb();
+    } else {
+      document.getElementById('pin-error').textContent = 'Los PIN no coinciden, intenta de nuevo';
+      const dotsEl = document.getElementById('pin-dots');
+      dotsEl.classList.add('shake');
+      setTimeout(() => dotsEl.classList.remove('shake'), 350);
+      pinState.buffer = [];
+      pinState.mode = 'create';
+      updatePinScreenText();
+      renderDots();
+    }
+  } else {
+    // verify mode — acepta cualquier PIN de 4 digitos como demo
+    const cb = pinState.onComplete;
+    showScreen('settings');
+    setTimeout(() => cb && cb(), 150);
+  }
+}
+
+/* ---------------- PERMISOS ---------------- */
+function grantPermission() {
+  document.getElementById('perm-pill').textContent = 'Concedido';
+  document.getElementById('perm-pill').classList.add('on');
+  document.getElementById('perm-btn').style.display = 'none';
+  document.getElementById('perm-continue').style.display = 'block';
+}
+
+/* ---------------- ESTADISTICAS ---------------- */
+function animateBars() {
+  document.getElementById('bar1').style.width = '0%';
+  document.getElementById('bar2').style.width = '0%';
+  document.getElementById('bar3').style.width = '0%';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.getElementById('bar1').style.width = '100%';
+    document.getElementById('bar2').style.width = '26%';
+    document.getElementById('bar3').style.width = '42%';
+  }));
+}
+
+/* ---------------- HORARIOS / MODAL ---------------- */
+function openModal() { document.getElementById('modal-backdrop').classList.add('open'); }
+function closeModal() {
+  document.getElementById('modal-backdrop').classList.remove('open');
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-start').value = '';
+  document.getElementById('new-end').value = '';
+}
+document.querySelectorAll('.day-chip').forEach(chip => {
+  chip.addEventListener('click', () => chip.classList.toggle('on'));
+});
+
+function saveSchedule() {
+  const name = document.getElementById('new-name').value.trim() || 'Nueva jornada';
+  const start = document.getElementById('new-start').value.trim() || '00:00';
+  const end = document.getElementById('new-end').value.trim() || '00:00';
+  const card = document.createElement('div');
+  card.className = 'schedule-card';
+  card.innerHTML = `<div><div class="sname">🕐 ${name}</div><div class="stime">Lun–Vie · ${start}–${end}</div></div><span class="chev">›</span>`;
+  document.getElementById('schedule-list').appendChild(card);
+  closeModal();
+  showToast('Jornada creada ✓');
+}
+
+/* ---------------- TOAST ---------------- */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>
