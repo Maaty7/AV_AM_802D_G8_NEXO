@@ -1,4 +1,5 @@
 package cl.duoc.nexo
+import cl.duoc.nexo.ui.splash.SplashScreen
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -7,9 +8,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import cl.duoc.nexo.ui.theme.NEXOTheme
-import cl.duoc.nexo.ui.usagetest.UsageTestScreen
+import cl.duoc.nexo.ui.navigation.NexoNavHost
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,13 +21,24 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             NEXOTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    // Pantalla temporal: prueba de factibilidad de UsageStatsManager
-                    // (prioridad técnica #1). Se reemplazará por la navegación real
-                    // (splash -> configuración -> horarios) una vez validada.
-                    UsageTestScreen(modifier = Modifier.fillMaxSize().padding(innerPadding))
-                }
+                NexoNavHost()
             }
         }
+    }
+}
+
+@Composable
+fun Greeting(name: String, modifier: Modifier = Modifier) {
+    Text(
+        text = "Hello $name!",
+        modifier = modifier
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun GreetingPreview() {
+    NEXOTheme {
+        Greeting("Android")
     }
 }

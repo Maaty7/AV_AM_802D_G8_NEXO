@@ -2,13 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Acceso de solo lectura a estadísticas de uso agregadas (tiempo por app).
-         No se puede solicitar con un diálogo estándar: el usuario debe otorgarlo
-         manualmente en Ajustes > Acceso especial > Acceso a datos de uso. -->
-    <uses-permission
-        android:name="android.permission.PACKAGE_USAGE_STATS"
-        tools:ignore="ProtectedPermissions" />
-
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
