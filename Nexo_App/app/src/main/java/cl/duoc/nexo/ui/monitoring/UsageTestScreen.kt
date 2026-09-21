@@ -33,6 +33,7 @@ import cl.duoc.nexo.viewmodel.UsageTestViewModel
 
 @Composable
 fun UsageTestScreen(
+    modifier: Modifier = Modifier,
     viewModel: UsageTestViewModel = viewModel()
 ) {
     LaunchedEffect(Unit) {
@@ -40,7 +41,7 @@ fun UsageTestScreen(
     }
 
     Surface(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
         Column(

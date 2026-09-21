@@ -27,7 +27,7 @@ import cl.duoc.nexo.viewmodel.ConfigInicialViewModel
 
 @Composable
 fun ConfigInicialScreen(
-    onContinuar: () -> Unit,
+    onContinuar: (nombre: String, correo: String) -> Unit,
     viewModel: ConfigInicialViewModel = viewModel()
 ) {
     Surface(
@@ -101,7 +101,11 @@ fun ConfigInicialScreen(
             )
 
             Button(
-                onClick = { viewModel.validarYContinuar(onContinuar) },
+                onClick = {
+                    viewModel.validarYContinuar { nombre, correo ->
+                        onContinuar(nombre, correo)
+                    }
+                },
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary

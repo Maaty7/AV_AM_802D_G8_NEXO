@@ -22,20 +22,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cl.duoc.nexo.data.local.database.NexoDatabase
 import cl.duoc.nexo.ui.theme.NexoDeep
 import cl.duoc.nexo.ui.theme.NexoMidnight
 import cl.duoc.nexo.ui.theme.NexoTeal
 import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen(onTimeout: () -> Unit) {
+fun SplashScreen(onDecidido: (existeConfiguracion: Boolean) -> Unit) {
+    val context = LocalContext.current
+
     LaunchedEffect(key1 = true) {
+        val dao = NexoDatabase.getInstance(context).parentSettingsDao()
+        val configuracion = dao.obtener()
         delay(2000L)
-        onTimeout()
+        onDecidido(configuracion != null)
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {

@@ -40,6 +40,8 @@ import cl.duoc.nexo.viewmodel.PinViewModel
 
 @Composable
 fun CrearPinScreen(
+    nombre: String,
+    correo: String,
     onPinCreado: () -> Unit,
     viewModel: PinViewModel = viewModel()
 ) {
@@ -142,7 +144,12 @@ fun CrearPinScreen(
                                     .clickable(enabled = tecla.isNotEmpty()) {
                                         when (tecla) {
                                             "⌫" -> viewModel.onBackspace()
-                                            else -> viewModel.onDigitPress(tecla, onPinConfirmado = onPinCreado)
+                                            else -> viewModel.onDigitPress(
+                                                digit = tecla,
+                                                nombre = nombre,
+                                                correo = correo,
+                                                onGuardado = onPinCreado
+                                            )
                                         }
                                     },
                                 contentAlignment = Alignment.Center

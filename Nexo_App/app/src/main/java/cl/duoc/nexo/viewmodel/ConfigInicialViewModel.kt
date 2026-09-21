@@ -29,7 +29,7 @@ class ConfigInicialViewModel : ViewModel() {
         correoError = null
     }
 
-    fun validarYContinuar(onValido: () -> Unit) {
+    fun validarYContinuar(onValido: (nombre: String, correo: String) -> Unit) {
         var esValido = true
 
         if (nombreApoderado.isBlank()) {
@@ -47,7 +47,7 @@ class ConfigInicialViewModel : ViewModel() {
         }
 
         if (esValido) {
-            onValido()
+            onValido(nombreApoderado, correoApoderado)
         }
     }
 }
