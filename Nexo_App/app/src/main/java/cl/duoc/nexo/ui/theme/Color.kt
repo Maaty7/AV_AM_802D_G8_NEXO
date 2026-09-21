@@ -2,10 +2,13 @@ package cl.duoc.nexo.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
-
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Paleta oficial NEXO (extraída del mockup del equipo)
+val NexoDeep = Color(0xFF065A82)      // Azul profundo — botones, acentos
+val NexoTeal = Color(0xFF1C7293)      // Teal — hover, secundario
+val NexoMidnight = Color(0xFF17203E)  // Medianoche — fondo splash
+val NexoIce = Color(0xFFEAF2F6)       // Hielo — fondo de inputs/cards
+val NexoCoral = Color(0xFFF96167)     // Coral — errores
+val NexoInk = Color(0xFF1B2430)       // Tinta — texto principal
+val NexoMute = Color(0xFF6C7A89)      // Mute — texto secundario
+val NexoGreen = Color(0xFF2C8C5A)     // Verde — éxito/activo
+val NexoBorder = Color(0xFFDBE6EE)    // Borde sutil de inputs
