@@ -1,6 +1,7 @@
 package cl.duoc.nexo.ui.stats
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,11 +15,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,24 +36,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import cl.duoc.nexo.data.local.entities.ReportEntity
 import cl.duoc.nexo.domain.AppUsageInfo
 import cl.duoc.nexo.domain.FranjaUso
 import cl.duoc.nexo.ui.navigation.NexoBottomBar
+import cl.duoc.nexo.ui.theme.NexoAmber
 import cl.duoc.nexo.ui.theme.NexoCoral
 import cl.duoc.nexo.ui.theme.NexoDeep
 import cl.duoc.nexo.ui.theme.NexoGreen
 import cl.duoc.nexo.ui.theme.NexoIce
 import cl.duoc.nexo.ui.theme.NexoMute
 import cl.duoc.nexo.ui.theme.NexoTeal
-import cl.duoc.nexo.viewmodel.InformesViewModel
+import cl.duoc.nexo.ui.theme.NexoViolet
 import cl.duoc.nexo.viewmodel.JornadaActivaViewModel
 
 private val coloresPorCategoria = mapOf(
     "Educación" to NexoDeep,
     "Comunicación" to NexoTeal,
+    "Redes Sociales" to NexoViolet,
     "Entretenimiento" to NexoCoral,
-    "Juegos" to Color(0xFFB45309),
+    "Juegos" to NexoAmber,
     "Otros" to NexoMute
 )
 
@@ -57,12 +65,11 @@ private val NexoOtrosColor = NexoMute
 @Composable
 fun EstadisticasScreen(
     navController: NavHostController,
-    viewModel: JornadaActivaViewModel = viewModel(),
-    informesViewModel: InformesViewModel = viewModel()
+    viewModel: JornadaActivaViewModel = viewModel()
 ) {
     val minutosRegistrados = viewModel.minutosPorCategoria()
-    // Se muestran las 5 categorías siempre (aunque estén en 0) para que la
-    // distribución se vea completa, no solo las categorías con actividad.
+    // Se muestran todas las categorías siempre (aunque estén en 0) para que
+    // la distribución se vea completa, no solo las categorías con actividad.
     val categorias = coloresPorCategoria.keys.associateWith { minutosRegistrados[it] ?: 0L }
     val hayActividad = categorias.values.any { it > 0 }
 
@@ -110,18 +117,13 @@ fun EstadisticasScreen(
                     SeccionUtilidadVsEntretenimiento(viewModel.utilidadVsEntretenimiento())
 
                     Spacer(modifier = Modifier.height(22.dp))
-                    SeccionCategorias(categorias)
+                    SeccionCategorias(categorias, viewModel.appsUsadas)
 
                     Spacer(modifier = Modifier.height(22.dp))
                     SeccionAppsMasUsadas(viewModel.appsUsadas)
 
                     Spacer(modifier = Modifier.height(22.dp))
                     SeccionLineaDeTiempo(viewModel.usoPorFranjas)
-                }
-
-                if (informesViewModel.informes.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(22.dp))
-                    SeccionHistorialInformes(informesViewModel.informes)
                 }
             }
         }
@@ -236,13 +238,19 @@ private fun Leyenda(color: Color, etiqueta: String, valor: Long, total: Long) {
 }
 
 @Composable
-private fun SeccionCategorias(categorias: Map<String, Long>) {
+private fun SeccionCategorias(categorias: Map<String, Long>, apps: List<AppUsageInfo>) {
     val maxMinutos = (categorias.values.maxOrNull() ?: 0L).coerceAtLeast(1L)
+    var categoriaSeleccionada by remember { mutableStateOf<String?>(null) }
 
     Column {
         TituloSeccion("DISTRIBUCIÓN POR CATEGORÍA")
         categorias.entries.sortedByDescending { it.value }.forEach { (nombre, minutos) ->
-            Column(modifier = Modifier.padding(bottom = 16.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { categoriaSeleccionada = nombre }
+                    .padding(bottom = 16.dp)
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -270,6 +278,52 @@ private fun SeccionCategorias(categorias: Map<String, Long>) {
             }
         }
     }
+
+    categoriaSeleccionada?.let { categoria ->
+        DetalleCategoriaDialog(
+            categoria = categoria,
+            apps = apps.filter { it.categoria == categoria }.sortedByDescending { it.totalTimeMinutes },
+            onDismiss = { categoriaSeleccionada = null }
+        )
+    }
+}
+
+@Composable
+private fun DetalleCategoriaDialog(categoria: String, apps: List<AppUsageInfo>, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(categoria) },
+        text = {
+            if (apps.isEmpty()) {
+                Text("Sin apps registradas en esta categoría.", fontSize = 13.sp, color = NexoMute)
+            } else {
+                Column {
+                    apps.forEach { app ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 5.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = app.appName,
+                                fontSize = 13.sp,
+                                modifier = Modifier.weight(1f, fill = false),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(text = "${app.totalTimeMinutes} min", fontSize = 12.5.sp, color = NexoMute)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cerrar")
+            }
+        }
+    )
 }
 
 @Composable
@@ -366,50 +420,6 @@ private fun SeccionLineaDeTiempo(franjas: List<FranjaUso>) {
                     color = NexoMute,
                     modifier = Modifier.weight(1f),
                     maxLines = 1
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SeccionHistorialInformes(informes: List<ReportEntity>) {
-    Column {
-        TituloSeccion("HISTORIAL DE INFORMES")
-        Text(
-            text = "Generados automáticamente al terminar cada jornada.",
-            fontSize = 11.sp,
-            color = NexoMute,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        informes.take(10).forEach { informe ->
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 10.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
-                    .padding(14.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(text = informe.nombreJornada, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                    Text(text = informe.fecha, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "${informe.horaInicio}–${informe.horaTermino} · ${informe.minutosTotales} min totales",
-                    fontSize = 11.5.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "Educación ${informe.minutosEducacion}m · Comunicación ${informe.minutosComunicacion}m · " +
-                        "Entreten. ${informe.minutosEntretenimiento}m · Juegos ${informe.minutosJuegos}m · " +
-                        "Otros ${informe.minutosOtros}m",
-                    fontSize = 10.5.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
@@ -61,6 +62,9 @@ fun ConfiguracionScreen(
         },
         OpcionConfig(Icons.Filled.Apps, "Aplicaciones supervisadas") {
             navController.navigate(NexoDestinations.APPS_SUPERVISADAS)
+        },
+        OpcionConfig(Icons.Filled.Assessment, "Informes") {
+            navController.navigate(NexoDestinations.INFORMES)
         },
         OpcionConfig(Icons.Filled.Schedule, "Horarios") {
             navController.navigate(NexoDestinations.HORARIOS)

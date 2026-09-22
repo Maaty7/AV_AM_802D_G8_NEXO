@@ -14,4 +14,5 @@ object NexoDestinations {
     const val EDITAR_CORREO = "editar_correo"
     const val APPS_SUPERVISADAS = "apps_supervisadas"
     const val ACERCA_DE = "acerca_de"
+    const val INFORMES = "informes"
 }

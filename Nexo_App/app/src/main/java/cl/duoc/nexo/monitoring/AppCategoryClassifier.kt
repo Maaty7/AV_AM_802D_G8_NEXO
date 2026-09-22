@@ -38,20 +38,22 @@ object AppCategoryClassifier {
         "com.google.android.dialer" to "Comunicación",
         "com.samsung.android.dialer" to "Comunicación",
 
-        // Entretenimiento
+        // Redes Sociales (separado de Entretenimiento: plataformas sociales, no streaming)
+        "com.instagram.android" to "Redes Sociales",
+        "com.zhiliaoapp.musically" to "Redes Sociales",
+        "com.ss.android.ugc.trill" to "Redes Sociales",
+        "com.twitter.android" to "Redes Sociales",
+        "com.facebook.katana" to "Redes Sociales",
+        "com.facebook.lite" to "Redes Sociales",
+        "com.snapchat.android" to "Redes Sociales",
+        "com.pinterest" to "Redes Sociales",
+        "com.reddit.frontpage" to "Redes Sociales",
+
+        // Entretenimiento (solo video/audio/streaming, sin redes sociales)
         "com.google.android.youtube" to "Entretenimiento",
         "com.google.android.apps.youtube.music" to "Entretenimiento",
-        "com.zhiliaoapp.musically" to "Entretenimiento",
-        "com.ss.android.ugc.trill" to "Entretenimiento",
-        "com.instagram.android" to "Entretenimiento",
-        "com.facebook.katana" to "Entretenimiento",
-        "com.facebook.lite" to "Entretenimiento",
         "com.netflix.mediaclient" to "Entretenimiento",
         "com.spotify.music" to "Entretenimiento",
-        "com.twitter.android" to "Entretenimiento",
-        "com.snapchat.android" to "Entretenimiento",
-        "com.pinterest" to "Entretenimiento",
-        "com.reddit.frontpage" to "Entretenimiento",
         "com.disney.disneyplus" to "Entretenimiento",
         "com.wbd.stream" to "Entretenimiento",
         "com.amazon.avod.thirdpartyclient" to "Entretenimiento",
@@ -106,7 +108,10 @@ object AppCategoryClassifier {
         "com.microblink.photomath" to "Educación",
         "org.khanacademy.android" to "Educación",
         "com.instructure.candroid" to "Educación",
-        "com.moodle.moodlemobile" to "Educación"
+        "com.moodle.moodlemobile" to "Educación",
+        "com.openai.chatgpt" to "Educación",
+        "com.google.android.apps.bard" to "Educación",
+        "com.anthropic.claude" to "Educación"
     )
 
     fun clasificar(packageName: String, context: Context): String {
@@ -116,12 +121,12 @@ object AppCategoryClassifier {
             val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
             when (appInfo.category) {
                 ApplicationInfo.CATEGORY_GAME -> "Juegos"
-                ApplicationInfo.CATEGORY_SOCIAL -> "Comunicación"
+                ApplicationInfo.CATEGORY_SOCIAL -> "Redes Sociales"
                 ApplicationInfo.CATEGORY_PRODUCTIVITY -> "Educación"
                 ApplicationInfo.CATEGORY_VIDEO,
                 ApplicationInfo.CATEGORY_AUDIO,
-                ApplicationInfo.CATEGORY_IMAGE,
-                ApplicationInfo.CATEGORY_NEWS -> "Entretenimiento"
+                ApplicationInfo.CATEGORY_IMAGE -> "Entretenimiento"
+                ApplicationInfo.CATEGORY_NEWS -> "Otros"
                 else -> "Otros"
             }
         } catch (e: PackageManager.NameNotFoundException) {

@@ -45,6 +45,7 @@ class JornadaReportWorker(
                 minutosTotales = usos.sumOf { it.totalTimeMinutes },
                 minutosEducacion = porCategoria["Educación"] ?: 0L,
                 minutosComunicacion = porCategoria["Comunicación"] ?: 0L,
+                minutosRedesSociales = porCategoria["Redes Sociales"] ?: 0L,
                 minutosEntretenimiento = porCategoria["Entretenimiento"] ?: 0L,
                 minutosJuegos = porCategoria["Juegos"] ?: 0L,
                 minutosOtros = porCategoria["Otros"] ?: 0L,

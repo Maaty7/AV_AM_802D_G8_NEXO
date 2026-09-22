@@ -11,6 +11,7 @@ import androidx.navigation.navArgument
 import cl.duoc.nexo.ui.home.HomeScreen
 import cl.duoc.nexo.ui.onboarding.ConfigInicialScreen
 import cl.duoc.nexo.ui.permissions.PermisosScreen
+import cl.duoc.nexo.ui.reports.InformesScreen
 import cl.duoc.nexo.ui.schedule.HorariosScreen
 import cl.duoc.nexo.ui.security.CambiarPinScreen
 import cl.duoc.nexo.ui.security.CrearPinScreen
@@ -94,16 +95,19 @@ fun NexoNavHost(navController: NavHostController = rememberNavController()) {
             ConfiguracionScreen(navController)
         }
         composable(NexoDestinations.CAMBIAR_PIN) {
-            CambiarPinScreen(onPinCambiado = { navController.popBackStack() })
+            CambiarPinScreen(navController)
         }
         composable(NexoDestinations.EDITAR_CORREO) {
-            EditarCorreoScreen(onGuardado = { navController.popBackStack() })
+            EditarCorreoScreen(navController)
         }
         composable(NexoDestinations.APPS_SUPERVISADAS) {
-            AplicacionesSupervisadasScreen()
+            AplicacionesSupervisadasScreen(navController)
         }
         composable(NexoDestinations.ACERCA_DE) {
-            AcercaDeScreen()
+            AcercaDeScreen(navController)
+        }
+        composable(NexoDestinations.INFORMES) {
+            InformesScreen(navController)
         }
     }
 }

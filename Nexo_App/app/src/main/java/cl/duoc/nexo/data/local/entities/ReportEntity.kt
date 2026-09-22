@@ -14,6 +14,7 @@ data class ReportEntity(
     val minutosTotales: Long,
     val minutosEducacion: Long,
     val minutosComunicacion: Long,
+    val minutosRedesSociales: Long = 0L,
     val minutosEntretenimiento: Long,
     val minutosJuegos: Long,
     val minutosOtros: Long,
