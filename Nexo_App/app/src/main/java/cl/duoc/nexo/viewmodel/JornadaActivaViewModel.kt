@@ -10,6 +10,8 @@ import cl.duoc.nexo.data.local.database.NexoDatabase
 import cl.duoc.nexo.data.local.entities.ScheduleEntity
 import cl.duoc.nexo.domain.AppUsageInfo
 import cl.duoc.nexo.domain.FranjaUso
+import cl.duoc.nexo.domain.jornadaEstaActiva
+import cl.duoc.nexo.domain.minutosDelDia
 import cl.duoc.nexo.monitoring.UsageStatsRepository
 import cl.duoc.nexo.work.JornadaReportScheduler
 import kotlinx.coroutines.flow.launchIn
@@ -100,15 +102,11 @@ class JornadaActivaViewModel(application: Application) : AndroidViewModel(applic
     }
 
     private fun estaActivaAhora(jornada: ScheduleEntity): Boolean {
-        val ahoraMin = minutosDelDia(horaActual())
-        val inicioMin = minutosDelDia(jornada.horaInicio)
-        val terminoMin = minutosDelDia(jornada.horaTermino)
-        return if (inicioMin <= terminoMin) {
-            ahoraMin in inicioMin..terminoMin
-        } else {
-            // Jornada que cruza medianoche (ej. horario nocturno)
-            ahoraMin >= inicioMin || ahoraMin <= terminoMin
-        }
+        return jornadaEstaActiva(
+            horaActualMin = minutosDelDia(horaActual()),
+            horaInicioMin = minutosDelDia(jornada.horaInicio),
+            horaTerminoMin = minutosDelDia(jornada.horaTermino)
+        )
     }
 
     private fun horaActual(): String {
@@ -116,12 +114,5 @@ class JornadaActivaViewModel(application: Application) : AndroidViewModel(applic
         val h = calendar.get(java.util.Calendar.HOUR_OF_DAY)
         val m = calendar.get(java.util.Calendar.MINUTE)
         return "%02d:%02d".format(h, m)
-    }
-
-    private fun minutosDelDia(hora: String): Int {
-        val partes = hora.split(":")
-        val h = partes.getOrNull(0)?.toIntOrNull() ?: 0
-        val m = partes.getOrNull(1)?.toIntOrNull() ?: 0
-        return h * 60 + m
     }
 }

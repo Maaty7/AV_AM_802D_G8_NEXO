@@ -1,6 +1,7 @@
 package cl.duoc.nexo.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -10,6 +11,8 @@ import cl.duoc.nexo.data.local.database.NexoDatabase
 import cl.duoc.nexo.data.local.entities.ParentSettingsEntity
 import cl.duoc.nexo.utils.HashUtils
 import kotlinx.coroutines.launch
+
+private const val TAG = "PinViewModel"
 
 enum class PinMode { VERIFICAR, CREAR, CONFIRMAR }
 
@@ -83,17 +86,23 @@ class PinViewModel(application: Application) : AndroidViewModel(application) {
     private fun guardarEnBaseDeDatos(nombre: String, correo: String, pin: String, onGuardado: () -> Unit) {
         guardando = true
         viewModelScope.launch {
-            val pinHash = HashUtils.sha256(pin)
-            val dao = NexoDatabase.getInstance(getApplication()).parentSettingsDao()
-            dao.guardar(
-                ParentSettingsEntity(
-                    nombreApoderado = nombre,
-                    correoApoderado = correo,
-                    pinHash = pinHash
+            try {
+                val pinHash = HashUtils.sha256(pin)
+                val dao = NexoDatabase.getInstance(getApplication()).parentSettingsDao()
+                dao.guardar(
+                    ParentSettingsEntity(
+                        nombreApoderado = nombre,
+                        correoApoderado = correo,
+                        pinHash = pinHash
+                    )
                 )
-            )
-            guardando = false
-            onGuardado()
+                onGuardado()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al guardar la configuración inicial", e)
+                error = "No se pudo guardar. Intenta de nuevo."
+            } finally {
+                guardando = false
+            }
         }
     }
 
@@ -144,12 +153,18 @@ class PinViewModel(application: Application) : AndroidViewModel(application) {
     private fun actualizarPinEnBaseDeDatos(pin: String, onGuardado: () -> Unit) {
         guardando = true
         viewModelScope.launch {
-            val dao = NexoDatabase.getInstance(getApplication()).parentSettingsDao()
-            dao.obtener()?.let { actual ->
-                dao.guardar(actual.copy(pinHash = HashUtils.sha256(pin)))
+            try {
+                val dao = NexoDatabase.getInstance(getApplication()).parentSettingsDao()
+                dao.obtener()?.let { actual ->
+                    dao.guardar(actual.copy(pinHash = HashUtils.sha256(pin)))
+                }
+                onGuardado()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al actualizar el PIN", e)
+                error = "No se pudo guardar. Intenta de nuevo."
+            } finally {
+                guardando = false
             }
-            guardando = false
-            onGuardado()
         }
     }
 

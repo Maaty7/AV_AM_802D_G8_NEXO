@@ -14,6 +14,10 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -21,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.ui.navigation.PantallaConVolver
+import cl.duoc.nexo.ui.security.VerificarPinDialog
 import cl.duoc.nexo.ui.theme.NexoMute
 import cl.duoc.nexo.viewmodel.EditarCorreoViewModel
 
@@ -29,6 +34,8 @@ fun EditarCorreoScreen(
     navController: NavHostController,
     viewModel: EditarCorreoViewModel = viewModel()
 ) {
+    var mostrarVerificacion by remember { mutableStateOf(false) }
+
     PantallaConVolver(titulo = "Correo del apoderado", navController = navController) { innerPadding ->
         Surface(
             modifier = Modifier
@@ -65,7 +72,7 @@ fun EditarCorreoScreen(
                         .padding(bottom = 16.dp)
                 )
                 Button(
-                    onClick = { viewModel.guardar { navController.popBackStack() } },
+                    onClick = { if (viewModel.validar()) mostrarVerificacion = true },
                     enabled = !viewModel.guardando,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -75,5 +82,15 @@ fun EditarCorreoScreen(
                 }
             }
         }
+    }
+
+    if (mostrarVerificacion) {
+        VerificarPinDialog(
+            onVerificado = {
+                mostrarVerificacion = false
+                viewModel.guardar { navController.popBackStack() }
+            },
+            onCancelar = { mostrarVerificacion = false }
+        )
     }
 }

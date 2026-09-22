@@ -1,6 +1,7 @@
 package cl.duoc.nexo.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -10,6 +11,8 @@ import cl.duoc.nexo.data.local.database.NexoDatabase
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+
+private const val TAG = "TemaViewModel"
 
 /**
  * Expone la preferencia de tema (guardada en ParentSettingsEntity) para que
@@ -24,6 +27,9 @@ class TemaViewModel(application: Application) : AndroidViewModel(application) {
     var temaOscuro by mutableStateOf(false)
         private set
 
+    var errorGuardado by mutableStateOf<String?>(null)
+        private set
+
     init {
         dao.observar()
             .onEach { config -> temaOscuro = config?.temaOscuro ?: false }
@@ -32,8 +38,14 @@ class TemaViewModel(application: Application) : AndroidViewModel(application) {
 
     fun alternarTema(activado: Boolean) {
         viewModelScope.launch {
-            dao.obtener()?.let { actual ->
-                dao.guardar(actual.copy(temaOscuro = activado))
+            try {
+                errorGuardado = null
+                dao.obtener()?.let { actual ->
+                    dao.guardar(actual.copy(temaOscuro = activado))
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al guardar preferencia de tema", e)
+                errorGuardado = "No se pudo guardar el tema. Intenta de nuevo."
             }
         }
     }

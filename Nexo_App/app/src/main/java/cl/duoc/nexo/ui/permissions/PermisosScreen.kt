@@ -28,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontFamily
@@ -39,6 +38,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import cl.duoc.nexo.monitoring.UsageAccessPermission
+import cl.duoc.nexo.ui.theme.NexoAmber
+import cl.duoc.nexo.ui.theme.NexoAmberBg
 import cl.duoc.nexo.ui.theme.NexoDeep
 import cl.duoc.nexo.ui.theme.NexoGreen
 import cl.duoc.nexo.ui.theme.NexoIce
@@ -133,7 +134,7 @@ fun PermisosScreen(onContinuar: () -> Unit) {
                 Box(
                     modifier = Modifier
                         .background(
-                            color = if (permisoConcedido) NexoGreen.copy(alpha = 0.15f) else Color(0xFFFDE3D3),
+                            color = if (permisoConcedido) NexoGreen.copy(alpha = 0.15f) else NexoAmberBg,
                             shape = RoundedCornerShape(20.dp)
                         )
                         .padding(horizontal = 10.dp, vertical = 5.dp)
@@ -142,7 +143,7 @@ fun PermisosScreen(onContinuar: () -> Unit) {
                         text = if (permisoConcedido) "Concedido" else "Pendiente",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (permisoConcedido) NexoGreen else Color(0xFFB45309)
+                        color = if (permisoConcedido) NexoGreen else NexoAmber
                     )
                 }
             }

@@ -115,22 +115,33 @@ object AppCategoryClassifier {
     )
 
     fun clasificar(packageName: String, context: Context): String {
-        mapaConocidos[packageName]?.let { return it }
+        clasificarConocido(packageName)?.let { return it }
 
         return try {
             val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
-            when (appInfo.category) {
-                ApplicationInfo.CATEGORY_GAME -> "Juegos"
-                ApplicationInfo.CATEGORY_SOCIAL -> "Redes Sociales"
-                ApplicationInfo.CATEGORY_PRODUCTIVITY -> "Educación"
-                ApplicationInfo.CATEGORY_VIDEO,
-                ApplicationInfo.CATEGORY_AUDIO,
-                ApplicationInfo.CATEGORY_IMAGE -> "Entretenimiento"
-                ApplicationInfo.CATEGORY_NEWS -> "Otros"
-                else -> "Otros"
-            }
+            clasificarPorCategoriaDelSistema(appInfo.category)
         } catch (e: PackageManager.NameNotFoundException) {
             "Otros"
+        }
+    }
+
+    /**
+     * Solo la búsqueda en el mapa de paquetes conocidos, sin tocar Context —
+     * separada de [clasificar] para poder testearla en una prueba unitaria
+     * normal, sin necesitar un Context real de Android.
+     */
+    fun clasificarConocido(packageName: String): String? = mapaConocidos[packageName]
+
+    private fun clasificarPorCategoriaDelSistema(category: Int): String {
+        return when (category) {
+            ApplicationInfo.CATEGORY_GAME -> "Juegos"
+            ApplicationInfo.CATEGORY_SOCIAL -> "Redes Sociales"
+            ApplicationInfo.CATEGORY_PRODUCTIVITY -> "Educación"
+            ApplicationInfo.CATEGORY_VIDEO,
+            ApplicationInfo.CATEGORY_AUDIO,
+            ApplicationInfo.CATEGORY_IMAGE -> "Entretenimiento"
+            ApplicationInfo.CATEGORY_NEWS -> "Otros"
+            else -> "Otros"
         }
     }
 }

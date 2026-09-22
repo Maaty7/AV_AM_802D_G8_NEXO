@@ -34,7 +34,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.nexo.ui.theme.NexoCoral
 import cl.duoc.nexo.ui.theme.NexoDeep
+import cl.duoc.nexo.ui.theme.NexoDotOutline
 import cl.duoc.nexo.ui.theme.NexoIce
+import cl.duoc.nexo.ui.theme.NexoKeypadBorder
 import cl.duoc.nexo.ui.theme.NexoMute
 import cl.duoc.nexo.viewmodel.PinViewModel
 
@@ -124,7 +126,7 @@ internal fun PinPad(
                             )
                             .border(
                                 width = 1.6.dp,
-                                color = if (filled) NexoDeep else Color(0xFFC3D2DE),
+                                color = if (filled) NexoDeep else NexoDotOutline,
                                 shape = CircleShape
                             )
                     )
@@ -165,7 +167,7 @@ internal fun PinPad(
                                     .clip(CircleShape)
                                     .then(
                                         if (tecla.isNotEmpty() && tecla != "⌫") {
-                                            Modifier.border(1.5.dp, Color(0xFFE1E9EF), CircleShape)
+                                            Modifier.border(1.5.dp, NexoKeypadBorder, CircleShape)
                                         } else Modifier
                                     )
                                     .clickable(enabled = tecla.isNotEmpty()) {

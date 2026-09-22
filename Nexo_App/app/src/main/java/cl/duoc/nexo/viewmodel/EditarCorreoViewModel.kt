@@ -1,6 +1,7 @@
 package cl.duoc.nexo.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,6 +9,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import cl.duoc.nexo.data.local.database.NexoDatabase
 import kotlinx.coroutines.launch
+
+private const val TAG = "EditarCorreoViewModel"
 
 class EditarCorreoViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -34,18 +37,30 @@ class EditarCorreoViewModel(application: Application) : AndroidViewModel(applica
         error = null
     }
 
-    fun guardar(onGuardado: () -> Unit) {
+    /** Valida el formato del correo antes de pedir el PIN — evita pedirlo para un valor que se va a rechazar igual. */
+    fun validar(): Boolean {
         if (!emailRegex.matches(correo)) {
             error = "Correo inválido"
-            return
+            return false
         }
+        error = null
+        return true
+    }
+
+    fun guardar(onGuardado: () -> Unit) {
         guardando = true
         viewModelScope.launch {
-            dao.obtener()?.let { actual ->
-                dao.guardar(actual.copy(correoApoderado = correo))
+            try {
+                dao.obtener()?.let { actual ->
+                    dao.guardar(actual.copy(correoApoderado = correo))
+                }
+                onGuardado()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al guardar el correo del apoderado", e)
+                error = "No se pudo guardar. Intenta de nuevo."
+            } finally {
+                guardando = false
             }
-            guardando = false
-            onGuardado()
         }
     }
 }

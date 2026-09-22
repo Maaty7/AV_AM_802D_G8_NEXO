@@ -2,6 +2,7 @@ package cl.duoc.nexo.viewmodel
 
 import android.app.Application
 import android.content.Intent
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -12,6 +13,8 @@ import cl.duoc.nexo.data.local.entities.SupervisedAppEntity
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+
+private const val TAG = "AplicacionesSupervisadasViewModel"
 
 data class AppSupervisable(
     val packageName: String,
@@ -25,6 +28,9 @@ class AplicacionesSupervisadasViewModel(application: Application) : AndroidViewM
     private val appsInstaladas = obtenerAppsInstaladas()
 
     var apps by mutableStateOf<List<AppSupervisable>>(emptyList())
+        private set
+
+    var errorGuardado by mutableStateOf<String?>(null)
         private set
 
     init {
@@ -43,7 +49,13 @@ class AplicacionesSupervisadasViewModel(application: Application) : AndroidViewM
 
     fun alternar(packageName: String, supervisada: Boolean) {
         viewModelScope.launch {
-            dao.guardar(SupervisedAppEntity(packageName = packageName, supervisada = supervisada))
+            try {
+                errorGuardado = null
+                dao.guardar(SupervisedAppEntity(packageName = packageName, supervisada = supervisada))
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al guardar preferencia de app supervisada", e)
+                errorGuardado = "No se pudo guardar el cambio. Intenta de nuevo."
+            }
         }
     }
 

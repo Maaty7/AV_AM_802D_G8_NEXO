@@ -52,6 +52,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.data.local.entities.ScheduleEntity
 import cl.duoc.nexo.ui.navigation.NexoBottomBar
+import cl.duoc.nexo.ui.security.VerificarPinDialog
 import cl.duoc.nexo.ui.theme.NexoBorder
 import cl.duoc.nexo.ui.theme.NexoCoral
 import cl.duoc.nexo.ui.theme.NexoDeep
@@ -69,6 +70,7 @@ fun HorariosScreen(
     var mostrarModal by remember { mutableStateOf(false) }
     var jornadaEditando by remember { mutableStateOf<ScheduleEntity?>(null) }
     var jornadaAEliminar by remember { mutableStateOf<ScheduleEntity?>(null) }
+    var accionPendiente by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     Scaffold(
         bottomBar = { NexoBottomBar(navController) }
@@ -91,6 +93,15 @@ fun HorariosScreen(
                     fontSize = 13.sp,
                     modifier = Modifier.padding(top = 4.dp, bottom = 18.dp)
                 )
+
+                viewModel.errorGuardado?.let { mensaje ->
+                    Text(
+                        text = mensaje,
+                        color = NexoCoral,
+                        fontSize = 12.5.sp,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                }
 
                 if (viewModel.jornadas.isEmpty()) {
                     Text(
@@ -270,13 +281,27 @@ fun HorariosScreen(
                     }
                     Button(
                         onClick = {
+                            // Se capturan como val antes de cerrar el modal: una vez que
+                            // mostrarModal = false, los remember(jornada) de este bloque
+                            // se descartan.
+                            val nombreFinal = nombre
+                            val horaInicioFinal = horaInicio
+                            val horaTerminoFinal = horaTermino
                             val diasTexto = diasDisponibles
                                 .filter { diasSeleccionados.value.contains(it) }
                                 .joinToString(", ")
-                            if (jornada == null) {
-                                viewModel.agregarJornada(nombre, horaInicio, horaTermino, diasTexto)
-                            } else {
-                                viewModel.actualizarJornada(jornada, nombre, horaInicio, horaTermino, diasTexto)
+                            accionPendiente = {
+                                if (jornada == null) {
+                                    viewModel.agregarJornada(nombreFinal, horaInicioFinal, horaTerminoFinal, diasTexto)
+                                } else {
+                                    viewModel.actualizarJornada(
+                                        jornada,
+                                        nombreFinal,
+                                        horaInicioFinal,
+                                        horaTerminoFinal,
+                                        diasTexto
+                                    )
+                                }
                             }
                             mostrarModal = false
                         },
@@ -300,7 +325,7 @@ fun HorariosScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.eliminarJornada(jornada)
+                        accionPendiente = { viewModel.eliminarJornada(jornada) }
                         jornadaAEliminar = null
                     }
                 ) {
@@ -312,6 +337,16 @@ fun HorariosScreen(
                     Text("Cancelar")
                 }
             }
+        )
+    }
+
+    accionPendiente?.let { accion ->
+        VerificarPinDialog(
+            onVerificado = {
+                accion()
+                accionPendiente = null
+            },
+            onCancelar = { accionPendiente = null }
         )
     }
 }

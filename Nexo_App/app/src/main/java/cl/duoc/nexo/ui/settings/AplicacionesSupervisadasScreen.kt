@@ -14,6 +14,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +27,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.ui.navigation.PantallaConVolver
+import cl.duoc.nexo.ui.security.VerificarPinDialog
+import cl.duoc.nexo.ui.theme.NexoCoral
 import cl.duoc.nexo.ui.theme.NexoDeep
 import cl.duoc.nexo.ui.theme.NexoMute
 import cl.duoc.nexo.viewmodel.AplicacionesSupervisadasViewModel
@@ -32,6 +38,8 @@ fun AplicacionesSupervisadasScreen(
     navController: NavHostController,
     viewModel: AplicacionesSupervisadasViewModel = viewModel()
 ) {
+    var accionPendiente by remember { mutableStateOf<(() -> Unit)?>(null) }
+
     PantallaConVolver(titulo = "Aplicaciones supervisadas", navController = navController) { innerPadding ->
         Surface(
             modifier = Modifier
@@ -50,6 +58,15 @@ fun AplicacionesSupervisadasScreen(
                     fontSize = 12.5.sp,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
+
+                viewModel.errorGuardado?.let { mensaje ->
+                    Text(
+                        text = mensaje,
+                        color = NexoCoral,
+                        fontSize = 12.5.sp,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                }
 
                 LazyColumn {
                     items(viewModel.apps) { app ->
@@ -72,7 +89,9 @@ fun AplicacionesSupervisadasScreen(
                             )
                             Switch(
                                 checked = app.supervisada,
-                                onCheckedChange = { viewModel.alternar(app.packageName, it) },
+                                onCheckedChange = { nuevoValor ->
+                                    accionPendiente = { viewModel.alternar(app.packageName, nuevoValor) }
+                                },
                                 colors = SwitchDefaults.colors(checkedTrackColor = NexoDeep)
                             )
                         }
@@ -80,5 +99,15 @@ fun AplicacionesSupervisadasScreen(
                 }
             }
         }
+    }
+
+    accionPendiente?.let { accion ->
+        VerificarPinDialog(
+            onVerificado = {
+                accion()
+                accionPendiente = null
+            },
+            onCancelar = { accionPendiente = null }
+        )
     }
 }

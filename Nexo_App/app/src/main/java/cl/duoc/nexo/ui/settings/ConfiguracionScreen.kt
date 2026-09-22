@@ -28,7 +28,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +37,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.ui.navigation.NexoBottomBar
 import cl.duoc.nexo.ui.navigation.NexoDestinations
+import cl.duoc.nexo.ui.theme.NexoChevron
+import cl.duoc.nexo.ui.theme.NexoCoral
 import cl.duoc.nexo.ui.theme.NexoDeep
 import cl.duoc.nexo.ui.theme.NexoIce
 import cl.duoc.nexo.viewmodel.TemaViewModel
@@ -128,6 +129,14 @@ fun ConfiguracionScreen(
                         colors = SwitchDefaults.colors(checkedTrackColor = NexoDeep)
                     )
                 }
+                temaViewModel.errorGuardado?.let { mensaje ->
+                    Text(
+                        text = mensaje,
+                        color = NexoCoral,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
 
                 opciones.forEach { opcion ->
                     Row(
@@ -158,7 +167,7 @@ fun ConfiguracionScreen(
                                 .weight(1f)
                                 .padding(start = 13.dp)
                         )
-                        Text(text = "›", color = Color(0xFFC2CCD4), fontSize = 15.sp)
+                        Text(text = "›", color = NexoChevron, fontSize = 15.sp)
                     }
                 }
             }
