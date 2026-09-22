@@ -16,8 +16,12 @@ import cl.duoc.nexo.ui.monitoring.UsageTestScreen
 import cl.duoc.nexo.ui.onboarding.ConfigInicialScreen
 import cl.duoc.nexo.ui.permissions.PermisosScreen
 import cl.duoc.nexo.ui.schedule.HorariosScreen
+import cl.duoc.nexo.ui.security.CambiarPinScreen
 import cl.duoc.nexo.ui.security.CrearPinScreen
+import cl.duoc.nexo.ui.settings.AcercaDeScreen
+import cl.duoc.nexo.ui.settings.AplicacionesSupervisadasScreen
 import cl.duoc.nexo.ui.settings.ConfiguracionScreen
+import cl.duoc.nexo.ui.settings.EditarCorreoScreen
 import cl.duoc.nexo.ui.splash.SplashScreen
 import cl.duoc.nexo.ui.stats.EstadisticasScreen
 
@@ -88,6 +92,18 @@ fun NexoNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable(NexoDestinations.CONFIGURACION) {
             ConfiguracionScreen(navController)
+        }
+        composable(NexoDestinations.CAMBIAR_PIN) {
+            CambiarPinScreen(onPinCambiado = { navController.popBackStack() })
+        }
+        composable(NexoDestinations.EDITAR_CORREO) {
+            EditarCorreoScreen(onGuardado = { navController.popBackStack() })
+        }
+        composable(NexoDestinations.APPS_SUPERVISADAS) {
+            AplicacionesSupervisadasScreen()
+        }
+        composable(NexoDestinations.ACERCA_DE) {
+            AcercaDeScreen()
         }
     }
 }

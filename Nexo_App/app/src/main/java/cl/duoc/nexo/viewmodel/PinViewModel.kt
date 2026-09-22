@@ -11,7 +11,7 @@ import cl.duoc.nexo.data.local.entities.ParentSettingsEntity
 import cl.duoc.nexo.utils.HashUtils
 import kotlinx.coroutines.launch
 
-enum class PinMode { CREAR, CONFIRMAR }
+enum class PinMode { VERIFICAR, CREAR, CONFIRMAR }
 
 class PinViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -28,12 +28,22 @@ class PinViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     private var primerPin: String = ""
+    private var esCambioPin = false
+    private var pinHashActual: String? = null
 
     val titulo: String
-        get() = if (modo == PinMode.CREAR) "Crear PIN" else "Confirmar PIN"
+        get() = when (modo) {
+            PinMode.VERIFICAR -> "Verifica tu PIN actual"
+            PinMode.CREAR -> if (esCambioPin) "Nuevo PIN" else "Crear PIN"
+            PinMode.CONFIRMAR -> "Confirmar PIN"
+        }
 
     val subtitulo: String
-        get() = if (modo == PinMode.CREAR) "Ingresa un PIN de 4 dígitos" else "Ingresa nuevamente el PIN"
+        get() = when (modo) {
+            PinMode.VERIFICAR -> "Ingresa tu PIN actual para continuar"
+            PinMode.CREAR -> "Ingresa un PIN de 4 dígitos"
+            PinMode.CONFIRMAR -> "Ingresa nuevamente el PIN"
+        }
 
     fun onDigitPress(digit: String, nombre: String, correo: String, onGuardado: () -> Unit) {
         if (buffer.length >= 4 || guardando) return
@@ -52,6 +62,7 @@ class PinViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun procesarPinCompleto(nombre: String, correo: String, onGuardado: () -> Unit) {
         when (modo) {
+            PinMode.VERIFICAR -> Unit // No aplica en el flujo de onboarding.
             PinMode.CREAR -> {
                 primerPin = buffer
                 buffer = ""
@@ -81,6 +92,62 @@ class PinViewModel(application: Application) : AndroidViewModel(application) {
                     pinHash = pinHash
                 )
             )
+            guardando = false
+            onGuardado()
+        }
+    }
+
+    /** Prepara el flujo de "Cambiar PIN": primero hay que verificar el PIN actual. */
+    fun iniciarCambioPin() {
+        esCambioPin = true
+        modo = PinMode.VERIFICAR
+        buffer = ""
+        error = null
+        viewModelScope.launch {
+            pinHashActual = NexoDatabase.getInstance(getApplication()).parentSettingsDao().obtener()?.pinHash
+        }
+    }
+
+    fun onDigitPressCambioPin(digit: String, onGuardado: () -> Unit) {
+        if (buffer.length >= 4 || guardando) return
+        error = null
+        buffer += digit
+        if (buffer.length == 4) {
+            when (modo) {
+                PinMode.VERIFICAR -> {
+                    if (HashUtils.sha256(buffer) == pinHashActual) {
+                        buffer = ""
+                        modo = PinMode.CREAR
+                    } else {
+                        error = "PIN incorrecto, intenta de nuevo"
+                        buffer = ""
+                    }
+                }
+                PinMode.CREAR -> {
+                    primerPin = buffer
+                    buffer = ""
+                    modo = PinMode.CONFIRMAR
+                }
+                PinMode.CONFIRMAR -> {
+                    if (buffer == primerPin) {
+                        actualizarPinEnBaseDeDatos(buffer, onGuardado)
+                    } else {
+                        error = "Los PIN no coinciden, intenta de nuevo"
+                        buffer = ""
+                        modo = PinMode.CREAR
+                    }
+                }
+            }
+        }
+    }
+
+    private fun actualizarPinEnBaseDeDatos(pin: String, onGuardado: () -> Unit) {
+        guardando = true
+        viewModelScope.launch {
+            val dao = NexoDatabase.getInstance(getApplication()).parentSettingsDao()
+            dao.obtener()?.let { actual ->
+                dao.guardar(actual.copy(pinHash = HashUtils.sha256(pin)))
+            }
             guardando = false
             onGuardado()
         }

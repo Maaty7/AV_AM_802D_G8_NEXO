@@ -45,6 +45,33 @@ fun CrearPinScreen(
     onPinCreado: () -> Unit,
     viewModel: PinViewModel = viewModel()
 ) {
+    PinPad(
+        titulo = viewModel.titulo,
+        subtitulo = viewModel.subtitulo,
+        buffer = viewModel.buffer,
+        error = viewModel.error,
+        onDigit = { digit ->
+            viewModel.onDigitPress(
+                digit = digit,
+                nombre = nombre,
+                correo = correo,
+                onGuardado = onPinCreado
+            )
+        },
+        onBackspace = { viewModel.onBackspace() }
+    )
+}
+
+/** Teclado numérico de 4 dígitos + puntos de progreso, compartido entre crear/confirmar PIN (onboarding) y cambiar PIN. */
+@Composable
+internal fun PinPad(
+    titulo: String,
+    subtitulo: String,
+    buffer: String,
+    error: String?,
+    onDigit: (String) -> Unit,
+    onBackspace: () -> Unit
+) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -72,13 +99,13 @@ fun CrearPinScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = viewModel.titulo,
+                text = titulo,
                 fontFamily = FontFamily.Serif,
                 fontSize = 20.sp
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = viewModel.subtitulo,
+                text = subtitulo,
                 color = NexoMute,
                 fontSize = 12.5.sp
             )
@@ -87,7 +114,7 @@ fun CrearPinScreen(
 
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 repeat(4) { index ->
-                    val filled = index < viewModel.buffer.length
+                    val filled = index < buffer.length
                     Box(
                         modifier = Modifier
                             .size(15.dp)
@@ -107,7 +134,7 @@ fun CrearPinScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = viewModel.error ?: "",
+                text = error ?: "",
                 color = NexoCoral,
                 fontSize = 12.sp
             )
@@ -143,13 +170,8 @@ fun CrearPinScreen(
                                     )
                                     .clickable(enabled = tecla.isNotEmpty()) {
                                         when (tecla) {
-                                            "⌫" -> viewModel.onBackspace()
-                                            else -> viewModel.onDigitPress(
-                                                digit = tecla,
-                                                nombre = nombre,
-                                                correo = correo,
-                                                onGuardado = onPinCreado
-                                            )
+                                            "⌫" -> onBackspace()
+                                            else -> onDigit(tecla)
                                         }
                                     },
                                 contentAlignment = Alignment.Center

@@ -45,13 +45,21 @@ private data class OpcionConfig(
 @Composable
 fun ConfiguracionScreen(navController: NavHostController) {
     val opciones = listOf(
-        OpcionConfig(Icons.Filled.Lock, "Cambiar PIN") { /* TODO: flujo de cambio de PIN */ },
-        OpcionConfig(Icons.Filled.Email, "Correo del apoderado") { /* TODO */ },
-        OpcionConfig(Icons.Filled.Apps, "Aplicaciones supervisadas") { /* TODO */ },
+        OpcionConfig(Icons.Filled.Lock, "Cambiar PIN") {
+            navController.navigate(NexoDestinations.CAMBIAR_PIN)
+        },
+        OpcionConfig(Icons.Filled.Email, "Correo del apoderado") {
+            navController.navigate(NexoDestinations.EDITAR_CORREO)
+        },
+        OpcionConfig(Icons.Filled.Apps, "Aplicaciones supervisadas") {
+            navController.navigate(NexoDestinations.APPS_SUPERVISADAS)
+        },
         OpcionConfig(Icons.Filled.Schedule, "Horarios") {
             navController.navigate(NexoDestinations.HORARIOS)
         },
-        OpcionConfig(Icons.Filled.Info, "Acerca de NEXO") { /* TODO */ }
+        OpcionConfig(Icons.Filled.Info, "Acerca de NEXO") {
+            navController.navigate(NexoDestinations.ACERCA_DE)
+        }
     )
 
     Scaffold(

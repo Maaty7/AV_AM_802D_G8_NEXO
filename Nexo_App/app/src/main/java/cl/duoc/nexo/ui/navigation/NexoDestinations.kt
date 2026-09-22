@@ -10,4 +10,8 @@ object NexoDestinations {
     const val ESTADISTICAS = "estadisticas"
     const val HORARIOS = "horarios"
     const val CONFIGURACION = "configuracion"
+    const val CAMBIAR_PIN = "cambiar_pin"
+    const val EDITAR_CORREO = "editar_correo"
+    const val APPS_SUPERVISADAS = "apps_supervisadas"
+    const val ACERCA_DE = "acerca_de"
 }

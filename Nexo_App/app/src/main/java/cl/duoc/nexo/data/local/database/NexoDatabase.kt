@@ -7,13 +7,20 @@ import androidx.room.RoomDatabase
 import cl.duoc.nexo.data.local.dao.ParentSettingsDao
 import cl.duoc.nexo.data.local.dao.ReportDao
 import cl.duoc.nexo.data.local.dao.ScheduleDao
+import cl.duoc.nexo.data.local.dao.SupervisedAppDao
 import cl.duoc.nexo.data.local.entities.ParentSettingsEntity
 import cl.duoc.nexo.data.local.entities.ReportEntity
 import cl.duoc.nexo.data.local.entities.ScheduleEntity
+import cl.duoc.nexo.data.local.entities.SupervisedAppEntity
 
 @Database(
-    entities = [ParentSettingsEntity::class, ScheduleEntity::class, ReportEntity::class],
-    version = 2,
+    entities = [
+        ParentSettingsEntity::class,
+        ScheduleEntity::class,
+        ReportEntity::class,
+        SupervisedAppEntity::class
+    ],
+    version = 3,
     exportSchema = false
 )
 abstract class NexoDatabase : RoomDatabase() {
@@ -21,6 +28,7 @@ abstract class NexoDatabase : RoomDatabase() {
     abstract fun parentSettingsDao(): ParentSettingsDao
     abstract fun scheduleDao(): ScheduleDao
     abstract fun reportDao(): ReportDao
+    abstract fun supervisedAppDao(): SupervisedAppDao
 
     companion object {
         @Volatile
