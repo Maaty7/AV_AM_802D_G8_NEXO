@@ -16,10 +16,13 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,11 +33,13 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.ui.navigation.NexoBottomBar
 import cl.duoc.nexo.ui.navigation.NexoDestinations
 import cl.duoc.nexo.ui.theme.NexoDeep
 import cl.duoc.nexo.ui.theme.NexoIce
+import cl.duoc.nexo.viewmodel.TemaViewModel
 
 private data class OpcionConfig(
     val icono: ImageVector,
@@ -43,7 +48,10 @@ private data class OpcionConfig(
 )
 
 @Composable
-fun ConfiguracionScreen(navController: NavHostController) {
+fun ConfiguracionScreen(
+    navController: NavHostController,
+    temaViewModel: TemaViewModel = viewModel()
+) {
     val opciones = listOf(
         OpcionConfig(Icons.Filled.Lock, "Cambiar PIN") {
             navController.navigate(NexoDestinations.CAMBIAR_PIN)
@@ -82,6 +90,40 @@ fun ConfiguracionScreen(navController: NavHostController) {
                     fontSize = 22.sp,
                     modifier = Modifier.padding(bottom = 20.dp)
                 )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .background(NexoIce, RoundedCornerShape(9.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.DarkMode,
+                            contentDescription = null,
+                            tint = NexoDeep,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Text(
+                        text = "Tema oscuro",
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 13.dp)
+                    )
+                    Switch(
+                        checked = temaViewModel.temaOscuro,
+                        onCheckedChange = { temaViewModel.alternarTema(it) },
+                        colors = SwitchDefaults.colors(checkedTrackColor = NexoDeep)
+                    )
+                }
 
                 opciones.forEach { opcion ->
                     Row(

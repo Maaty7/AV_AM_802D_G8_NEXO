@@ -1,6 +1,7 @@
 package cl.duoc.nexo.ui.schedule
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,7 +29,10 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,17 +45,18 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.data.local.entities.ScheduleEntity
 import cl.duoc.nexo.ui.navigation.NexoBottomBar
+import cl.duoc.nexo.ui.theme.NexoBorder
 import cl.duoc.nexo.ui.theme.NexoCoral
 import cl.duoc.nexo.ui.theme.NexoDeep
-import cl.duoc.nexo.ui.theme.NexoIce
 import cl.duoc.nexo.ui.theme.NexoMute
 import cl.duoc.nexo.viewmodel.HorariosViewModel
 
-private val diasDisponibles = listOf("L", "M", "Mi", "J", "V", "S", "D")
+private val diasDisponibles = listOf("LU", "MA", "MI", "JU", "VI", "SA", "DO")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +66,7 @@ fun HorariosScreen(
 ) {
     var mostrarModal by remember { mutableStateOf(false) }
     var jornadaEditando by remember { mutableStateOf<ScheduleEntity?>(null) }
+    var jornadaAEliminar by remember { mutableStateOf<ScheduleEntity?>(null) }
 
     Scaffold(
         bottomBar = { NexoBottomBar(navController) }
@@ -99,7 +106,7 @@ fun HorariosScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 6.dp)
-                                    .background(NexoIce, RoundedCornerShape(14.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(14.dp))
                                     .clickable {
                                         jornadaEditando = jornada
                                         mostrarModal = true
@@ -116,10 +123,10 @@ fun HorariosScreen(
                                     Text(
                                         text = "${jornada.dias} · ${jornada.horaInicio}–${jornada.horaTermino}",
                                         fontSize = 11.5.sp,
-                                        color = NexoMute
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                Text(text = "›", color = NexoMute, fontSize = 16.sp)
+                                Text(text = "›", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 16.sp)
                             }
                         }
                     }
@@ -145,10 +152,14 @@ fun HorariosScreen(
         val jornada = jornadaEditando
         val sheetState = rememberModalBottomSheetState()
         var nombre by remember(jornada) { mutableStateOf(jornada?.nombre ?: "") }
-        var horaInicio by remember(jornada) { mutableStateOf(jornada?.horaInicio ?: "") }
-        var horaTermino by remember(jornada) { mutableStateOf(jornada?.horaTermino ?: "") }
+        var horaInicio by remember(jornada) { mutableStateOf(jornada?.horaInicio ?: "08:00") }
+        var horaTermino by remember(jornada) { mutableStateOf(jornada?.horaTermino ?: "14:00") }
         val diasSeleccionados = remember(jornada) {
-            val iniciales = jornada?.dias?.split(",")?.toSet() ?: setOf("L", "M", "Mi", "J", "V")
+            val iniciales = jornada?.dias
+                ?.split(",")
+                ?.map { it.trim() }
+                ?.toSet()
+                ?: setOf("LU", "MA", "MI", "JU", "VI")
             mutableStateOf(iniciales)
         }
 
@@ -171,8 +182,8 @@ fun HorariosScreen(
                     placeholder = { Text("Ej. Horario nocturno") },
                     shape = RoundedCornerShape(10.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = NexoIce,
-                        focusedContainerColor = NexoIce
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -180,28 +191,16 @@ fun HorariosScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = horaInicio,
-                        onValueChange = { horaInicio = it },
-                        label = { Text("Hora inicio") },
-                        placeholder = { Text("08:00") },
-                        shape = RoundedCornerShape(10.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedContainerColor = NexoIce,
-                            focusedContainerColor = NexoIce
-                        ),
+                    SelectorDeHora(
+                        etiqueta = "Hora inicio",
+                        hora = horaInicio,
+                        onHoraSeleccionada = { horaInicio = it },
                         modifier = Modifier.weight(1f)
                     )
-                    OutlinedTextField(
-                        value = horaTermino,
-                        onValueChange = { horaTermino = it },
-                        label = { Text("Hora término") },
-                        placeholder = { Text("14:00") },
-                        shape = RoundedCornerShape(10.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedContainerColor = NexoIce,
-                            focusedContainerColor = NexoIce
-                        ),
+                    SelectorDeHora(
+                        etiqueta = "Hora término",
+                        hora = horaTermino,
+                        onHoraSeleccionada = { horaTermino = it },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -221,7 +220,10 @@ fun HorariosScreen(
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
-                                .background(if (seleccionado) NexoDeep else NexoIce, CircleShape)
+                                .background(
+                                    if (seleccionado) NexoDeep else MaterialTheme.colorScheme.surfaceVariant,
+                                    CircleShape
+                                )
                                 .clickable {
                                     diasSeleccionados.value = if (seleccionado) {
                                         diasSeleccionados.value - dia
@@ -232,10 +234,10 @@ fun HorariosScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = dia.take(1),
-                                fontSize = 11.sp,
+                                text = dia,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (seleccionado) Color.White else NexoMute
+                                color = if (seleccionado) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -254,7 +256,7 @@ fun HorariosScreen(
                     } else {
                         OutlinedButton(
                             onClick = {
-                                viewModel.eliminarJornada(jornada)
+                                jornadaAEliminar = jornada
                                 mostrarModal = false
                             },
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = NexoCoral),
@@ -267,7 +269,7 @@ fun HorariosScreen(
                         onClick = {
                             val diasTexto = diasDisponibles
                                 .filter { diasSeleccionados.value.contains(it) }
-                                .joinToString(",")
+                                .joinToString(", ")
                             if (jornada == null) {
                                 viewModel.agregarJornada(nombre, horaInicio, horaTermino, diasTexto)
                             } else {
@@ -283,6 +285,116 @@ fun HorariosScreen(
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
+            }
+        }
+    }
+
+    jornadaAEliminar?.let { jornada ->
+        AlertDialog(
+            onDismissRequest = { jornadaAEliminar = null },
+            title = { Text("¿Eliminar esta jornada?") },
+            text = { Text("Se cancelará su supervisión automática.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.eliminarJornada(jornada)
+                        jornadaAEliminar = null
+                    }
+                ) {
+                    Text("Eliminar", color = NexoCoral)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { jornadaAEliminar = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+}
+
+/** Campo de solo lectura con la hora seleccionada; al tocarlo abre un TimePickerDialog (formato 24h). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SelectorDeHora(
+    etiqueta: String,
+    hora: String,
+    onHoraSeleccionada: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var mostrarDialogo by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier) {
+        Text(
+            text = etiqueta,
+            fontSize = 11.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = NexoMute,
+            modifier = Modifier.padding(bottom = 6.dp)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
+                .border(1.dp, NexoBorder, RoundedCornerShape(10.dp))
+                .clickable { mostrarDialogo = true }
+                .padding(horizontal = 14.dp, vertical = 14.dp)
+        ) {
+            Text(text = hora, fontSize = 14.sp)
+        }
+    }
+
+    if (mostrarDialogo) {
+        val partes = hora.split(":")
+        val horaInicial = partes.getOrNull(0)?.toIntOrNull() ?: 8
+        val minutoInicial = partes.getOrNull(1)?.toIntOrNull() ?: 0
+        val estado = rememberTimePickerState(
+            initialHour = horaInicial,
+            initialMinute = minutoInicial,
+            is24Hour = true
+        )
+
+        TimePickerDialog(
+            onDismissRequest = { mostrarDialogo = false },
+            onConfirmar = {
+                onHoraSeleccionada("%02d:%02d".format(estado.hour, estado.minute))
+                mostrarDialogo = false
+            }
+        ) {
+            TimePicker(state = estado)
+        }
+    }
+}
+
+/** Material3 no trae un TimePickerDialog listo para usar (a diferencia de DatePickerDialog); este es el patrón recomendado oficialmente para envolver un TimePicker en un diálogo. */
+@Composable
+private fun TimePickerDialog(
+    onDismissRequest: () -> Unit,
+    onConfirmar: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Dialog(onDismissRequest = onDismissRequest) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                content()
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismissRequest) {
+                        Text("Cancelar")
+                    }
+                    TextButton(onClick = onConfirmar) {
+                        Text("Aceptar")
+                    }
+                }
             }
         }
     }

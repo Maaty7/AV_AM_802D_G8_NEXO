@@ -112,7 +112,7 @@ fun PermisosScreen(onContinuar: () -> Unit) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(NexoIce, RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(14.dp))
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -126,7 +126,7 @@ fun PermisosScreen(onContinuar: () -> Unit) {
                     Text(
                         text = "Usage Access",
                         fontSize = 11.sp,
-                        color = NexoMute
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 

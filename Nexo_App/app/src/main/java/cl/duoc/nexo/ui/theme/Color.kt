@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 val NexoDeep = Color(0xFF065A82)      // Azul profundo — botones, acentos
 val NexoTeal = Color(0xFF1C7293)      // Teal — hover, secundario
 val NexoMidnight = Color(0xFF17203E)  // Medianoche — fondo splash
+val NexoMidnightVariant = Color(0xFF263759) // Variante de medianoche — fondo de inputs/cards en tema oscuro
 val NexoIce = Color(0xFFEAF2F6)       // Hielo — fondo de inputs/cards
 val NexoCoral = Color(0xFFF96167)     // Coral — errores
 val NexoInk = Color(0xFF1B2430)       // Tinta — texto principal

@@ -155,7 +155,7 @@ private fun SeccionResumen(appsUsadas: Int, minutosTotales: Long, appMasUsada: S
 private fun ResumenCard(valor: String, etiqueta: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .background(NexoIce, RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
             .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -163,11 +163,11 @@ private fun ResumenCard(valor: String, etiqueta: String, modifier: Modifier = Mo
             text = valor,
             fontFamily = FontFamily.Serif,
             fontSize = 16.sp,
-            color = NexoDeep,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        Text(text = etiqueta, fontSize = 10.5.sp, color = NexoMute)
+        Text(text = etiqueta, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -387,7 +387,7 @@ private fun SeccionHistorialInformes(informes: List<ReportEntity>) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 10.dp)
-                    .background(NexoIce, RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
                     .padding(14.dp)
             ) {
                 Row(
@@ -395,13 +395,13 @@ private fun SeccionHistorialInformes(informes: List<ReportEntity>) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(text = informe.nombreJornada, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                    Text(text = informe.fecha, fontSize = 11.sp, color = NexoMute)
+                    Text(text = informe.fecha, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "${informe.horaInicio}–${informe.horaTermino} · ${informe.minutosTotales} min totales",
                     fontSize = 11.5.sp,
-                    color = NexoMute
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
@@ -409,7 +409,7 @@ private fun SeccionHistorialInformes(informes: List<ReportEntity>) {
                         "Entreten. ${informe.minutosEntretenimiento}m · Juegos ${informe.minutosJuegos}m · " +
                         "Otros ${informe.minutosOtros}m",
                     fontSize = 10.5.sp,
-                    color = NexoMute
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

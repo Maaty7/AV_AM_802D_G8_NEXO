@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
-        tools:ignore="ProtectedPermission" />
+        tools:ignore="ProtectedPermissions" />
 
     <!--
         Requerido desde Android 11 (API 30): sin esto, UsageStatsManager y

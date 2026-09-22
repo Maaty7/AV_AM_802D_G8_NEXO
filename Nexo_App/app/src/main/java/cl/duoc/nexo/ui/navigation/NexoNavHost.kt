@@ -1,10 +1,7 @@
 package cl.duoc.nexo.ui.navigation
 
 import android.net.Uri
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -12,7 +9,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import cl.duoc.nexo.ui.home.HomeScreen
-import cl.duoc.nexo.ui.monitoring.UsageTestScreen
 import cl.duoc.nexo.ui.onboarding.ConfigInicialScreen
 import cl.duoc.nexo.ui.permissions.PermisosScreen
 import cl.duoc.nexo.ui.schedule.HorariosScreen
@@ -87,13 +83,6 @@ fun NexoNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable(NexoDestinations.HOME) {
             HomeScreen(navController)
-        }
-        composable(NexoDestinations.USAGE_TEST) {
-            Scaffold(
-                bottomBar = { NexoBottomBar(navController) }
-            ) { innerPadding ->
-                UsageTestScreen(modifier = Modifier.padding(innerPadding))
-            }
         }
         composable(NexoDestinations.HORARIOS) {
             HorariosScreen(navController)

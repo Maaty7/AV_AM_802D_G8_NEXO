@@ -6,7 +6,6 @@ object NexoDestinations {
     const val CREAR_PIN = "crear_pin"
     const val VERIFICAR_PIN = "verificar_pin"
     const val PERMISOS = "permisos"
-    const val USAGE_TEST = "usage_test"
     const val HOME = "home"
     const val ESTADISTICAS = "estadisticas"
     const val HORARIOS = "horarios"

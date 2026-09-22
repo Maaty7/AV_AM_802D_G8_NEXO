@@ -37,8 +37,12 @@ private val NexoDarkColorScheme = darkColorScheme(
     onBackground = Color.White,
     surface = NexoMidnight,
     onSurface = Color.White,
-    surfaceVariant = NexoIce,
-    onSurfaceVariant = NexoMute,
+    // A diferencia del esquema claro, acá NO se reutiliza NexoIce (queda
+    // clara siempre) — sería texto claro sobre fondo claro. Se usa una
+    // variante oscura coherente con la paleta, con NexoIce como color de
+    // texto (en vez de fondo) para mantener buen contraste.
+    surfaceVariant = NexoMidnightVariant,
+    onSurfaceVariant = NexoIce,
     outline = NexoBorder,
     error = NexoCoral,
     onError = Color.White

@@ -1,7 +1,6 @@
 package cl.duoc.nexo.ui.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Schedule
@@ -20,7 +19,6 @@ private data class NexoTab(val route: String, val label: String, val icon: Image
 
 private val tabs = listOf(
     NexoTab(NexoDestinations.HOME, "Inicio", Icons.Filled.Home),
-    NexoTab(NexoDestinations.USAGE_TEST, "Actividad", Icons.Filled.AccessTime),
     NexoTab(NexoDestinations.ESTADISTICAS, "Stats", Icons.Filled.BarChart),
     NexoTab(NexoDestinations.HORARIOS, "Horarios", Icons.Filled.Schedule),
     NexoTab(NexoDestinations.CONFIGURACION, "Ajustes", Icons.Filled.Settings)

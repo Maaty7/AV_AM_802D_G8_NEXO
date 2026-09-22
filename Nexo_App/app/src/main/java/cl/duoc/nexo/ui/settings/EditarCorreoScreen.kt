@@ -20,7 +20,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cl.duoc.nexo.ui.theme.NexoIce
 import cl.duoc.nexo.ui.theme.NexoMute
 import cl.duoc.nexo.viewmodel.EditarCorreoViewModel
 
@@ -60,8 +59,8 @@ fun EditarCorreoScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = NexoIce,
-                    focusedContainerColor = NexoIce
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
                 ),
                 modifier = Modifier
                     .fillMaxWidth()

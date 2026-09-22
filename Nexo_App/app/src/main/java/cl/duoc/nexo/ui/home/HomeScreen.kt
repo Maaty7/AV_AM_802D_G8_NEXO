@@ -27,7 +27,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.ui.navigation.NexoBottomBar
 import cl.duoc.nexo.ui.theme.NexoDeep
-import cl.duoc.nexo.ui.theme.NexoIce
 import cl.duoc.nexo.ui.theme.NexoMidnight
 import cl.duoc.nexo.ui.theme.NexoMute
 import cl.duoc.nexo.viewmodel.JornadaActivaViewModel
@@ -141,11 +140,16 @@ fun HomeScreen(
 private fun MiniCard(valor: String, etiqueta: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .background(NexoIce, RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
             .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = valor, fontFamily = FontFamily.Serif, fontSize = 18.sp, color = NexoDeep)
-        Text(text = etiqueta, fontSize = 10.5.sp, color = NexoMute)
+        Text(
+            text = valor,
+            fontFamily = FontFamily.Serif,
+            fontSize = 18.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(text = etiqueta, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

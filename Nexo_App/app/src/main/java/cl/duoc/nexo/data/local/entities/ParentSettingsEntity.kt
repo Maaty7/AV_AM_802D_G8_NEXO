@@ -8,5 +8,6 @@ data class ParentSettingsEntity(
     @PrimaryKey val id: Int = 1, // Solo habrá un registro (config del apoderado)
     val nombreApoderado: String,
     val correoApoderado: String,
-    val pinHash: String
+    val pinHash: String,
+    val temaOscuro: Boolean = false
 )
