@@ -23,15 +23,23 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.ui.navigation.NexoBottomBar
 import cl.duoc.nexo.ui.theme.NexoDeep
 import cl.duoc.nexo.ui.theme.NexoIce
 import cl.duoc.nexo.ui.theme.NexoMidnight
 import cl.duoc.nexo.ui.theme.NexoMute
+import cl.duoc.nexo.viewmodel.JornadaActivaViewModel
 
 @Composable
-fun HomeScreen(navController: NavHostController) {
+fun HomeScreen(
+    navController: NavHostController,
+    viewModel: JornadaActivaViewModel = viewModel()
+) {
+    val jornada = viewModel.jornadaReferencia
+    val categorias = viewModel.minutosPorCategoria()
+
     Scaffold(
         bottomBar = { NexoBottomBar(navController) }
     ) { innerPadding ->
@@ -54,56 +62,75 @@ fun HomeScreen(navController: NavHostController) {
                     modifier = Modifier.padding(bottom = 18.dp)
                 )
 
-                // TODO: reemplazar con datos reales de Room cuando exista persistencia
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            Brush.linearGradient(listOf(NexoDeep, NexoMidnight)),
-                            RoundedCornerShape(16.dp)
-                        )
-                        .padding(18.dp)
-                ) {
+                if (jornada == null) {
                     Text(
-                        text = "🏫 Jornada escolar",
-                        color = Color.White.copy(alpha = 0.85f),
-                        fontSize = 13.5.sp
+                        text = "Aún no tienes jornadas configuradas.\nVe a la pestaña Horarios para crear la primera.",
+                        color = NexoMute,
+                        fontSize = 13.sp
                     )
-                    Text(
-                        text = "08:00 — 14:00",
-                        color = Color.White,
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 22.sp,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 10.dp)
-                    )
-                    Row(
+                } else {
+                    Column(
                         modifier = Modifier
-                            .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(20.dp))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                            .fillMaxWidth()
+                            .background(
+                                Brush.linearGradient(listOf(NexoDeep, NexoMidnight)),
+                                RoundedCornerShape(16.dp)
+                            )
+                            .padding(18.dp)
                     ) {
                         Text(
-                            text = "🟢 ACTIVA",
+                            text = "🏫 ${jornada.nombre}",
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontSize = 13.5.sp
+                        )
+                        Text(
+                            text = "${jornada.horaInicio} — ${jornada.horaTermino}",
                             color = Color.White,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 22.sp,
+                            modifier = Modifier.padding(top = 4.dp, bottom = 10.dp)
+                        )
+                        Row(
+                            modifier = Modifier
+                                .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(20.dp))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (viewModel.jornadaEstaActiva) "🟢 ACTIVA" else "⚪ INACTIVA",
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Text(
+                        text = "RESUMEN",
+                        color = NexoMute,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 10.dp)
+                    )
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        MiniCard(
+                            valor = "${viewModel.minutosTotales}m",
+                            etiqueta = "Tiempo total",
+                            modifier = Modifier.weight(1f)
+                        )
+                        MiniCard(
+                            valor = "${categorias["Educación"] ?: 0}m",
+                            etiqueta = "Educación",
+                            modifier = Modifier.weight(1f)
+                        )
+                        MiniCard(
+                            valor = "${categorias["Entretenimiento"] ?: 0}m",
+                            etiqueta = "Entreten.",
+                            modifier = Modifier.weight(1f)
                         )
                     }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = "RESUMEN DE HOY",
-                    color = NexoMute,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 10.dp)
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MiniCard(valor = "1h 24m", etiqueta = "Tiempo total", modifier = Modifier.weight(1f))
-                    MiniCard(valor = "50m", etiqueta = "Educación", modifier = Modifier.weight(1f))
-                    MiniCard(valor = "21m", etiqueta = "Entreten.", modifier = Modifier.weight(1f))
                 }
             }
         }

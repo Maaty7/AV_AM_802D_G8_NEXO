@@ -18,4 +18,7 @@ interface ScheduleDao {
 
     @Query("SELECT * FROM schedules ORDER BY id ASC")
     fun observarTodas(): Flow<List<ScheduleEntity>>
+
+    @Query("SELECT * FROM schedules WHERE id = :id LIMIT 1")
+    suspend fun obtenerPorId(id: Int): ScheduleEntity?
 }

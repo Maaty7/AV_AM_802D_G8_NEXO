@@ -5,6 +5,17 @@
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermission" />
 
+    <!--
+        Requerido desde Android 11 (API 30): sin esto, UsageStatsManager y
+        PackageManager solo ven la propia app de NEXO por las reglas de
+        "package visibility", aunque el permiso de Usage Access esté
+        concedido. NEXO necesita ver TODAS las apps instaladas por el menor
+        para poder informar su uso, así que corresponde al caso de uso
+        permitido por Google Play para apps de control parental.
+    -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

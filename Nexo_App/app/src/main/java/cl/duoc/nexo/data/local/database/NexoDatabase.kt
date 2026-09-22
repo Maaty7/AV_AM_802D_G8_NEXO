@@ -5,19 +5,22 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import cl.duoc.nexo.data.local.dao.ParentSettingsDao
+import cl.duoc.nexo.data.local.dao.ReportDao
 import cl.duoc.nexo.data.local.dao.ScheduleDao
 import cl.duoc.nexo.data.local.entities.ParentSettingsEntity
+import cl.duoc.nexo.data.local.entities.ReportEntity
 import cl.duoc.nexo.data.local.entities.ScheduleEntity
 
 @Database(
-    entities = [ParentSettingsEntity::class, ScheduleEntity::class],
-    version = 1,
+    entities = [ParentSettingsEntity::class, ScheduleEntity::class, ReportEntity::class],
+    version = 2,
     exportSchema = false
 )
 abstract class NexoDatabase : RoomDatabase() {
 
     abstract fun parentSettingsDao(): ParentSettingsDao
     abstract fun scheduleDao(): ScheduleDao
+    abstract fun reportDao(): ReportDao
 
     companion object {
         @Volatile
@@ -29,7 +32,11 @@ abstract class NexoDatabase : RoomDatabase() {
                     context.applicationContext,
                     NexoDatabase::class.java,
                     "nexo_database"
-                ).build()
+                )
+                    // MVP académico: sin migraciones formales todavía: si cambia
+                    // el esquema, se recrea la base en vez de crashear.
+                    .fallbackToDestructiveMigration(true)
+                    .build()
                 INSTANCE = instancia
                 instancia
             }
