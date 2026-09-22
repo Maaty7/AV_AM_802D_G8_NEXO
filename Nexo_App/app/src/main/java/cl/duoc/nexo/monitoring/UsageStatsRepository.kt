@@ -5,13 +5,16 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import cl.duoc.nexo.data.local.database.NexoDatabase
 import cl.duoc.nexo.domain.AppUsageInfo
 import cl.duoc.nexo.domain.FranjaUso
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.Calendar
 
 object UsageStatsRepository {
 
-    fun obtenerUsoDeHoy(context: Context): List<AppUsageInfo> {
+    suspend fun obtenerUsoDeHoy(context: Context): List<AppUsageInfo> = withContext(Dispatchers.IO) {
         val calendar = Calendar.getInstance()
         val endTime = calendar.timeInMillis
         calendar.set(Calendar.HOUR_OF_DAY, 0)
@@ -19,27 +22,28 @@ object UsageStatsRepository {
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
         val startTime = calendar.timeInMillis
-        return consultar(context, startTime, endTime)
+        consultar(context, startTime, endTime)
     }
 
-    fun obtenerUsoEnRango(context: Context, horaInicio: String, horaTermino: String): List<AppUsageInfo> {
-        val (inicio, fin) = calcularRangoJornada(horaInicio, horaTermino)
-        return consultar(context, inicio, fin)
-    }
+    suspend fun obtenerUsoEnRango(context: Context, horaInicio: String, horaTermino: String): List<AppUsageInfo> =
+        withContext(Dispatchers.IO) {
+            val (inicio, fin) = calcularRangoJornada(horaInicio, horaTermino)
+            consultar(context, inicio, fin)
+        }
 
     /**
      * Divide la jornada en bloques de tamaño fijo ([minutosPorFranja]) y suma,
      * para cada bloque, cuántos minutos hubo alguna app en primer plano — para
      * graficar cómo se distribuyó el uso del teléfono a lo largo de la jornada.
      */
-    fun obtenerUsoPorFranjas(
+    suspend fun obtenerUsoPorFranjas(
         context: Context,
         horaInicio: String,
         horaTermino: String,
         minutosPorFranja: Int
-    ): List<FranjaUso> {
+    ): List<FranjaUso> = withContext(Dispatchers.IO) {
         val (inicio, fin) = calcularRangoJornada(horaInicio, horaTermino)
-        if (fin <= inicio) return emptyList()
+        if (fin <= inicio) return@withContext emptyList()
 
         val franjaMs = minutosPorFranja * 60_000L
         val cantidadFranjas = (((fin - inicio) - 1) / franjaMs + 1).toInt()
@@ -57,7 +61,7 @@ object UsageStatsRepository {
             }
         }
 
-        return (0 until cantidadFranjas).map { i ->
+        (0 until cantidadFranjas).map { i ->
             val horaFranja = Calendar.getInstance().apply { timeInMillis = inicio + i * franjaMs }
             FranjaUso(
                 etiqueta = "%02d:%02d".format(horaFranja.get(Calendar.HOUR_OF_DAY), horaFranja.get(Calendar.MINUTE)),
@@ -96,7 +100,7 @@ object UsageStatsRepository {
         return h to m
     }
 
-    private fun consultar(context: Context, startTime: Long, endTime: Long): List<AppUsageInfo> {
+    private suspend fun consultar(context: Context, startTime: Long, endTime: Long): List<AppUsageInfo> {
         if (endTime <= startTime) return emptyList()
 
         val totales = calcularTiemposViaEventos(context, startTime, endTime)
@@ -122,9 +126,13 @@ object UsageStatsRepository {
      * Lee el registro crudo de eventos (queryEvents) y arma la lista de
      * sesiones en primer plano (paquete + inicio + fin), en vez de depender
      * de los resúmenes pre-calculados de queryUsageStats (que pueden estar
-     * desactualizados para el día en curso).
+     * desactualizados para el día en curso). Excluye las apps que el
+     * apoderado desmarcó en "Aplicaciones supervisadas" — este es el único
+     * punto donde se calculan las sesiones (tanto el total por app como la
+     * línea de tiempo por franjas pasan por acá), así que el filtro queda
+     * aplicado en todos lados a la vez: Inicio, Estadísticas e Informes.
      */
-    private fun calcularSesiones(context: Context, startTime: Long, endTime: Long): List<Sesion> {
+    private suspend fun calcularSesiones(context: Context, startTime: Long, endTime: Long): List<Sesion> {
         val usageStatsManager =
             context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val eventos = usageStatsManager.queryEvents(startTime, endTime)
@@ -156,10 +164,14 @@ object UsageStatsRepository {
             }
         }
 
-        return sesiones
+        val noSupervisadas = NexoDatabase.getInstance(context).supervisedAppDao()
+            .obtenerPackagesNoSupervisados()
+            .toSet()
+
+        return sesiones.filterNot { it.packageName in noSupervisadas }
     }
 
-    private fun calcularTiemposViaEventos(context: Context, startTime: Long, endTime: Long): Map<String, Long> {
+    private suspend fun calcularTiemposViaEventos(context: Context, startTime: Long, endTime: Long): Map<String, Long> {
         return calcularSesiones(context, startTime, endTime)
             .groupBy { it.packageName }
             .mapValues { (_, sesiones) -> sesiones.sumOf { it.fin - it.inicio } }

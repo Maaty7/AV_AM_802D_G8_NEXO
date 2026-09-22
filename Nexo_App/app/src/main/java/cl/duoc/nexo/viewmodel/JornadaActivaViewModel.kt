@@ -46,7 +46,7 @@ class JornadaActivaViewModel(application: Application) : AndroidViewModel(applic
             .launchIn(viewModelScope)
     }
 
-    fun refrescarUso() {
+    suspend fun refrescarUso() {
         val jornada = jornadaReferencia ?: run {
             appsUsadas = emptyList()
             minutosTotales = 0L

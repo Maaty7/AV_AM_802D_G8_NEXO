@@ -15,4 +15,7 @@ interface SupervisedAppDao {
 
     @Query("SELECT * FROM supervised_apps")
     fun observarTodas(): Flow<List<SupervisedAppEntity>>
+
+    @Query("SELECT packageName FROM supervised_apps WHERE supervisada = 0")
+    suspend fun obtenerPackagesNoSupervisados(): List<String>
 }
