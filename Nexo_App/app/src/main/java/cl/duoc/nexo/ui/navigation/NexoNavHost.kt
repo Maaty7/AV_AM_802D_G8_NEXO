@@ -18,6 +18,7 @@ import cl.duoc.nexo.ui.permissions.PermisosScreen
 import cl.duoc.nexo.ui.schedule.HorariosScreen
 import cl.duoc.nexo.ui.security.CambiarPinScreen
 import cl.duoc.nexo.ui.security.CrearPinScreen
+import cl.duoc.nexo.ui.security.VerificarPinScreen
 import cl.duoc.nexo.ui.settings.AcercaDeScreen
 import cl.duoc.nexo.ui.settings.AplicacionesSupervisadasScreen
 import cl.duoc.nexo.ui.settings.ConfiguracionScreen
@@ -33,8 +34,11 @@ fun NexoNavHost(navController: NavHostController = rememberNavController()) {
     ) {
         composable(NexoDestinations.SPLASH) {
             SplashScreen(onDecidido = { existeConfiguracion ->
+                // Si ya existe una ParentSettingsEntity guardada, el onboarding se
+                // completó (nombre + correo + PIN se guardan juntos al final de ese
+                // flujo), así que solo falta verificar el PIN antes de dejar pasar.
                 val destino = if (existeConfiguracion) {
-                    NexoDestinations.HOME
+                    NexoDestinations.VERIFICAR_PIN
                 } else {
                     NexoDestinations.CONFIG_INICIAL
                 }
@@ -69,6 +73,13 @@ fun NexoNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable(NexoDestinations.PERMISOS) {
             PermisosScreen(onContinuar = {
+                navController.navigate(NexoDestinations.HOME) {
+                    popUpTo(NexoDestinations.SPLASH) { inclusive = true }
+                }
+            })
+        }
+        composable(NexoDestinations.VERIFICAR_PIN) {
+            VerificarPinScreen(onPinCorrecto = {
                 navController.navigate(NexoDestinations.HOME) {
                     popUpTo(NexoDestinations.SPLASH) { inclusive = true }
                 }

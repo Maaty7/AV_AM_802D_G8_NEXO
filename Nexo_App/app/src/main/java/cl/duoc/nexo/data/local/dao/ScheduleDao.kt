@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import cl.duoc.nexo.data.local.entities.ScheduleEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -12,6 +13,9 @@ interface ScheduleDao {
 
     @Insert
     suspend fun insertar(schedule: ScheduleEntity)
+
+    @Update
+    suspend fun actualizar(schedule: ScheduleEntity)
 
     @Delete
     suspend fun eliminar(schedule: ScheduleEntity)

@@ -5,6 +5,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 
+private val DOMINIOS_CONOCIDOS = setOf(
+    "gmail.com", "hotmail.com", "outlook.com", "live.com", "icloud.com", "yahoo.com"
+)
+
 class ConfigInicialViewModel : ViewModel() {
 
     var nombreApoderado by mutableStateOf("")
@@ -43,6 +47,9 @@ class ConfigInicialViewModel : ViewModel() {
             esValido = false
         } else if (!emailRegex.matches(correoApoderado)) {
             correoError = "Correo inválido"
+            esValido = false
+        } else if (correoApoderado.substringAfterLast("@").lowercase() !in DOMINIOS_CONOCIDOS) {
+            correoError = "Usa un correo de un proveedor conocido (Gmail, Hotmail, Outlook, etc.)"
             esValido = false
         }
 

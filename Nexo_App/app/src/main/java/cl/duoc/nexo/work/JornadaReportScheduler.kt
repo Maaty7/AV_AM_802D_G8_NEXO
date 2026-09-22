@@ -37,7 +37,7 @@ object JornadaReportScheduler {
         )
     }
 
-    private fun cancelar(context: Context, scheduleId: Int) {
+    fun cancelar(context: Context, scheduleId: Int) {
         WorkManager.getInstance(context).cancelUniqueWork(nombreTrabajo(scheduleId))
     }
 

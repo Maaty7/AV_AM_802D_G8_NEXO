@@ -42,11 +42,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import cl.duoc.nexo.data.local.entities.ScheduleEntity
 import cl.duoc.nexo.ui.navigation.NexoBottomBar
+import cl.duoc.nexo.ui.theme.NexoCoral
 import cl.duoc.nexo.ui.theme.NexoDeep
 import cl.duoc.nexo.ui.theme.NexoIce
 import cl.duoc.nexo.ui.theme.NexoMute
 import cl.duoc.nexo.viewmodel.HorariosViewModel
+
+private val diasDisponibles = listOf("L", "M", "Mi", "J", "V", "S", "D")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +59,7 @@ fun HorariosScreen(
     viewModel: HorariosViewModel = viewModel()
 ) {
     var mostrarModal by remember { mutableStateOf(false) }
+    var jornadaEditando by remember { mutableStateOf<ScheduleEntity?>(null) }
 
     Scaffold(
         bottomBar = { NexoBottomBar(navController) }
@@ -95,6 +100,10 @@ fun HorariosScreen(
                                     .fillMaxWidth()
                                     .padding(vertical = 6.dp)
                                     .background(NexoIce, RoundedCornerShape(14.dp))
+                                    .clickable {
+                                        jornadaEditando = jornada
+                                        mostrarModal = true
+                                    }
                                     .padding(16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
@@ -117,7 +126,10 @@ fun HorariosScreen(
                 }
 
                 OutlinedButton(
-                    onClick = { mostrarModal = true },
+                    onClick = {
+                        jornadaEditando = null
+                        mostrarModal = true
+                    },
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -130,19 +142,26 @@ fun HorariosScreen(
     }
 
     if (mostrarModal) {
+        val jornada = jornadaEditando
         val sheetState = rememberModalBottomSheetState()
-        var nombre by remember { mutableStateOf("") }
-        var horaInicio by remember { mutableStateOf("") }
-        var horaTermino by remember { mutableStateOf("") }
-        val diasSeleccionados = remember { mutableStateOf(setOf("L", "M", "Mi", "J", "V")) }
-        val diasDisponibles = listOf("L", "M", "Mi", "J", "V", "S", "D")
+        var nombre by remember(jornada) { mutableStateOf(jornada?.nombre ?: "") }
+        var horaInicio by remember(jornada) { mutableStateOf(jornada?.horaInicio ?: "") }
+        var horaTermino by remember(jornada) { mutableStateOf(jornada?.horaTermino ?: "") }
+        val diasSeleccionados = remember(jornada) {
+            val iniciales = jornada?.dias?.split(",")?.toSet() ?: setOf("L", "M", "Mi", "J", "V")
+            mutableStateOf(iniciales)
+        }
 
         ModalBottomSheet(
             onDismissRequest = { mostrarModal = false },
             sheetState = sheetState
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
-                Text(text = "Nueva jornada", fontFamily = FontFamily.Serif, fontSize = 18.sp)
+                Text(
+                    text = if (jornada == null) "Nueva jornada" else "Editar jornada",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 18.sp
+                )
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
@@ -225,18 +244,35 @@ fun HorariosScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(
-                        onClick = { mostrarModal = false },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Cancelar")
+                    if (jornada == null) {
+                        OutlinedButton(
+                            onClick = { mostrarModal = false },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Cancelar")
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.eliminarJornada(jornada)
+                                mostrarModal = false
+                            },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = NexoCoral),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Eliminar")
+                        }
                     }
                     Button(
                         onClick = {
                             val diasTexto = diasDisponibles
                                 .filter { diasSeleccionados.value.contains(it) }
-                                .joinToString("")
-                            viewModel.agregarJornada(nombre, horaInicio, horaTermino, diasTexto)
+                                .joinToString(",")
+                            if (jornada == null) {
+                                viewModel.agregarJornada(nombre, horaInicio, horaTermino, diasTexto)
+                            } else {
+                                viewModel.actualizarJornada(jornada, nombre, horaInicio, horaTermino, diasTexto)
+                            }
                             mostrarModal = false
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = NexoDeep),

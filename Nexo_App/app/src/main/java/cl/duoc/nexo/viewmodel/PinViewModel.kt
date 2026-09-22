@@ -152,4 +152,29 @@ class PinViewModel(application: Application) : AndroidViewModel(application) {
             onGuardado()
         }
     }
+
+    /** Prepara la verificación de PIN al abrir la app (distinto del flujo de "Cambiar PIN": aquí solo se confirma, no se pide uno nuevo). */
+    fun iniciarVerificacionAcceso() {
+        modo = PinMode.VERIFICAR
+        buffer = ""
+        error = null
+        viewModelScope.launch {
+            pinHashActual = NexoDatabase.getInstance(getApplication()).parentSettingsDao().obtener()?.pinHash
+        }
+    }
+
+    fun onDigitPressVerificarAcceso(digit: String, onCorrecto: () -> Unit) {
+        if (buffer.length >= 4 || guardando) return
+        error = null
+        buffer += digit
+        if (buffer.length == 4) {
+            if (HashUtils.sha256(buffer) == pinHashActual) {
+                buffer = ""
+                onCorrecto()
+            } else {
+                error = "PIN incorrecto, intenta de nuevo"
+                buffer = ""
+            }
+        }
+    }
 }

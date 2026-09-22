@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import cl.duoc.nexo.data.local.database.NexoDatabase
 import cl.duoc.nexo.data.local.entities.ScheduleEntity
+import cl.duoc.nexo.work.JornadaReportScheduler
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -38,9 +39,25 @@ class HorariosViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun actualizarJornada(jornada: ScheduleEntity, nombre: String, inicio: String, termino: String, dias: String) {
+        viewModelScope.launch {
+            dao.actualizar(
+                jornada.copy(
+                    nombre = nombre.ifBlank { "Nueva jornada" },
+                    horaInicio = inicio.ifBlank { "00:00" },
+                    horaTermino = termino.ifBlank { "00:00" },
+                    dias = dias.ifBlank { "—" }
+                )
+            )
+        }
+    }
+
     fun eliminarJornada(jornada: ScheduleEntity) {
         viewModelScope.launch {
             dao.eliminar(jornada)
+            // Si no se cancela, el informe automático de WorkManager quedaría
+            // programado para siempre sobre una jornada que ya no existe.
+            JornadaReportScheduler.cancelar(getApplication(), jornada.id)
         }
     }
 }
