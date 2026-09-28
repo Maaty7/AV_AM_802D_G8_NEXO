@@ -12,6 +12,7 @@ import cl.duoc.nexo.ui.home.HomeScreen
 import cl.duoc.nexo.ui.onboarding.ConfigInicialScreen
 import cl.duoc.nexo.ui.permissions.PermisosScreen
 import cl.duoc.nexo.ui.reports.InformesScreen
+import cl.duoc.nexo.ui.schedule.ExcepcionesScreen
 import cl.duoc.nexo.ui.schedule.HorariosScreen
 import cl.duoc.nexo.ui.security.CambiarPinScreen
 import cl.duoc.nexo.ui.security.CrearPinScreen
@@ -108,6 +109,9 @@ fun NexoNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable(NexoDestinations.INFORMES) {
             InformesScreen(navController)
+        }
+        composable(NexoDestinations.EXCEPCIONES) {
+            ExcepcionesScreen(navController)
         }
     }
 }

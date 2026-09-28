@@ -11,6 +11,7 @@ data class ReportEntity(
     val fecha: String,
     val horaInicio: String,
     val horaTermino: String,
+    val dias: String = "",
     val minutosTotales: Long,
     val minutosEducacion: Long,
     val minutosComunicacion: Long,
@@ -18,5 +19,11 @@ data class ReportEntity(
     val minutosEntretenimiento: Long,
     val minutosJuegos: Long,
     val minutosOtros: Long,
+    /**
+     * Detalle por app usada en la jornada, serializado como texto simple
+     * (una app por línea: "nombre|categoria|minutos") para no necesitar una
+     * tabla hija — solo se usa para pintar el PDF, nunca se consulta en SQL.
+     */
+    val appsUsadas: String = "",
     val generadoEn: Long
 )

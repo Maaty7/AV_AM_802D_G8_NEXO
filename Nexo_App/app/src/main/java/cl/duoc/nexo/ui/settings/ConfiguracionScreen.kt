@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -69,6 +70,9 @@ fun ConfiguracionScreen(
         },
         OpcionConfig(Icons.Filled.Schedule, "Horarios") {
             navController.navigate(NexoDestinations.HORARIOS)
+        },
+        OpcionConfig(Icons.Filled.EventBusy, "Días sin clases") {
+            navController.navigate(NexoDestinations.EXCEPCIONES)
         },
         OpcionConfig(Icons.Filled.Info, "Acerca de NEXO") {
             navController.navigate(NexoDestinations.ACERCA_DE)

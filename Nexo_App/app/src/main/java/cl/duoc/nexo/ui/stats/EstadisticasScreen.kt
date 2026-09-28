@@ -39,24 +39,13 @@ import androidx.navigation.NavHostController
 import cl.duoc.nexo.domain.AppUsageInfo
 import cl.duoc.nexo.domain.FranjaUso
 import cl.duoc.nexo.ui.navigation.NexoBottomBar
-import cl.duoc.nexo.ui.theme.NexoAmber
 import cl.duoc.nexo.ui.theme.NexoCoral
 import cl.duoc.nexo.ui.theme.NexoDeep
 import cl.duoc.nexo.ui.theme.NexoGreen
 import cl.duoc.nexo.ui.theme.NexoIce
 import cl.duoc.nexo.ui.theme.NexoMute
-import cl.duoc.nexo.ui.theme.NexoTeal
-import cl.duoc.nexo.ui.theme.NexoViolet
+import cl.duoc.nexo.ui.theme.coloresPorCategoria
 import cl.duoc.nexo.viewmodel.JornadaActivaViewModel
-
-private val coloresPorCategoria = mapOf(
-    "Educación" to NexoDeep,
-    "Comunicación" to NexoTeal,
-    "Redes Sociales" to NexoViolet,
-    "Entretenimiento" to NexoCoral,
-    "Juegos" to NexoAmber,
-    "Otros" to NexoMute
-)
 
 private val NexoUtilidad = NexoGreen
 private val NexoEntretenimiento = NexoCoral

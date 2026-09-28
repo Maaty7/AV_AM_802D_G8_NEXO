@@ -15,4 +15,5 @@ object NexoDestinations {
     const val APPS_SUPERVISADAS = "apps_supervisadas"
     const val ACERCA_DE = "acerca_de"
     const val INFORMES = "informes"
+    const val EXCEPCIONES = "excepciones"
 }
