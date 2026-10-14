@@ -13,8 +13,12 @@ import cl.duoc.nexo.monitoring.ResultadoConsultaUso
 import cl.duoc.nexo.monitoring.UsageAccessPermission
 import cl.duoc.nexo.monitoring.UsageStatsRepository
 import cl.duoc.nexo.utils.FeriadosChile
+import java.time.LocalDateTime
 
 private const val TAG = "JornadaReportWorker"
+
+// TEMPORAL — diagnóstico de informes vacíos, quitar cuando se confirme el arreglo.
+private const val DEBUG_TAG = "NEXO_DEBUG"
 
 /**
  * Se ejecuta en segundo plano (programado por [JornadaReportScheduler]) y
@@ -66,19 +70,31 @@ class JornadaReportWorker(
         val fechaObjetivo = calcularFechaObjetivo(jornada.horaTermino)
         val fechaTexto = fechaObjetivo.toString()
 
+        Log.d(
+            DEBUG_TAG,
+            "[Worker] EJECUTANDO ahora=${LocalDateTime.now()} jornada=${jornada.id} fechaObjetivo=$fechaTexto " +
+                "horaInicio=${jornada.horaInicio} horaTermino=${jornada.horaTermino} dias=${jornada.dias} " +
+                "permisoUsageAccess=${UsageAccessPermission.isGranted(applicationContext)}"
+        )
+
         if (!jornada.dias.contains(abreviacionDia(fechaObjetivo.dayOfWeek))) {
+            Log.d(DEBUG_TAG, "[Worker] SALTADO: $fechaTexto no corresponde a la jornada ${jornada.id} (días: ${jornada.dias})")
             return Result.success()
         }
         if (FeriadosChile.esFeriado(fechaTexto)) {
+            Log.d(DEBUG_TAG, "[Worker] SALTADO: $fechaTexto es feriado, jornada ${jornada.id}")
             return Result.success()
         }
         if (db.excepcionJornadaDao().obtenerVigentes(jornada.id, fechaTexto).isNotEmpty()) {
+            Log.d(DEBUG_TAG, "[Worker] SALTADO: $fechaTexto cae en una excepción manual, jornada ${jornada.id}")
             return Result.success()
         }
         if (db.reportDao().contarPorJornadaYFecha(jornada.id, fechaTexto) > 0) {
+            Log.d(DEBUG_TAG, "[Worker] SALTADO: ya existe un informe para la jornada ${jornada.id} en $fechaTexto")
             return Result.success()
         }
         if (!UsageAccessPermission.isGranted(applicationContext)) {
+            Log.w(DEBUG_TAG, "[Worker] SIN PERMISO de Usage Access: no se guarda informe (ni vacío) para la jornada ${jornada.id} en $fechaTexto")
             return Result.success()
         }
 
@@ -90,9 +106,18 @@ class JornadaReportWorker(
         )
 
         val usos = when (resultado) {
-            is ResultadoConsultaUso.RangoInvalido -> return Result.success()
+            is ResultadoConsultaUso.RangoInvalido -> {
+                Log.w(DEBUG_TAG, "[Worker] RANGO INVÁLIDO para la jornada ${jornada.id} en $fechaTexto: no se guarda informe vacío")
+                return Result.success()
+            }
             is ResultadoConsultaUso.Exito -> resultado.apps
         }
+
+        Log.d(
+            DEBUG_TAG,
+            "[Worker] usos devueltos: apps=${usos.size} minutosTotales=${usos.sumOf { it.totalTimeMinutes }} " +
+                "(0 minutos acá es un informe real de \"sin uso\", no un rango inválido)"
+        )
 
         val porCategoria = usos.groupBy { it.categoria }
             .mapValues { (_, apps) -> apps.sumOf { it.totalTimeMinutes } }
