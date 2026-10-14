@@ -5,7 +5,6 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.util.Log
 import cl.duoc.nexo.data.local.database.NexoDatabase
 import cl.duoc.nexo.domain.AppUsageInfo
 import cl.duoc.nexo.domain.FranjaUso
@@ -13,16 +12,8 @@ import cl.duoc.nexo.domain.RangoJornada
 import cl.duoc.nexo.domain.calcularRangoJornada
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
-
-// TEMPORAL — diagnóstico de informes vacíos, quitar cuando se confirme el arreglo.
-private const val DEBUG_TAG = "NEXO_DEBUG"
-private fun formatearFechaLegible(millis: Long): String =
-    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(millis))
 
 /** Resultado de consultar el uso de una jornada: distingue "sin uso real" de "rango inválido" (nunca se debe guardar un informe por esto último). */
 sealed interface ResultadoConsultaUso {
@@ -57,22 +48,8 @@ object UsageStatsRepository {
         fechaBase: LocalDate = LocalDate.now()
     ): ResultadoConsultaUso = withContext(Dispatchers.IO) {
         when (val rango = calcularRangoJornada(fechaBase, horaInicio, horaTermino)) {
-            is RangoJornada.Invalido -> {
-                Log.w(
-                    DEBUG_TAG,
-                    "[UsageStatsRepository] obtenerUsoEnRango RANGO INVALIDO fechaBase=$fechaBase " +
-                        "horaInicio=$horaInicio horaTermino=$horaTermino"
-                )
-                ResultadoConsultaUso.RangoInvalido
-            }
-            is RangoJornada.Valido -> {
-                Log.d(
-                    DEBUG_TAG,
-                    "[UsageStatsRepository] obtenerUsoEnRango fechaBase=$fechaBase horaInicio=$horaInicio horaTermino=$horaTermino " +
-                        "-> inicio=${formatearFechaLegible(rango.inicioMillis)} fin=${formatearFechaLegible(rango.finMillis)}"
-                )
-                ResultadoConsultaUso.Exito(consultar(context, rango.inicioMillis, rango.finMillis))
-            }
+            is RangoJornada.Invalido -> ResultadoConsultaUso.RangoInvalido
+            is RangoJornada.Valido -> ResultadoConsultaUso.Exito(consultar(context, rango.inicioMillis, rango.finMillis))
         }
     }
 
@@ -120,10 +97,9 @@ object UsageStatsRepository {
 
     private suspend fun consultar(context: Context, startTime: Long, endTime: Long): List<AppUsageInfo> {
         val totales = calcularTiemposViaEventos(context, startTime, endTime)
-        Log.d(DEBUG_TAG, "[UsageStatsRepository] consultar: packages con tiempo>0 antes de filtrar sistema = ${totales.count { it.value > 0 }} de ${totales.size} totales")
         val packageManager = context.packageManager
 
-        val resultado = totales.entries
+        return totales.entries
             .filter { it.value > 0 }
             .filterNot { esAppDeSistema(it.key, packageManager) }
             .map { (pkg, tiempoMs) ->
@@ -135,9 +111,6 @@ object UsageStatsRepository {
                 )
             }
             .sortedByDescending { it.totalTimeMs }
-
-        Log.d(DEBUG_TAG, "[UsageStatsRepository] consultar: apps finales tras filtro de apps de sistema = ${resultado.size}")
-        return resultado
     }
 
     private data class Sesion(val packageName: String, val inicio: Long, val fin: Long)
@@ -160,11 +133,9 @@ object UsageStatsRepository {
         val tiemposInicio = mutableMapOf<String, Long>()
         val sesiones = mutableListOf<Sesion>()
         val evento = UsageEvents.Event()
-        var eventosLeidos = 0
 
         while (eventos.hasNextEvent()) {
             eventos.getNextEvent(evento)
-            eventosLeidos++
             when (evento.eventType) {
                 UsageEvents.Event.MOVE_TO_FOREGROUND -> {
                     tiemposInicio[evento.packageName] = evento.timeStamp
@@ -186,23 +157,11 @@ object UsageStatsRepository {
             }
         }
 
-        Log.d(
-            DEBUG_TAG,
-            "[UsageStatsRepository] calcularSesiones rango=${formatearFechaLegible(startTime)}..${formatearFechaLegible(endTime)} " +
-                "eventosLeidos=$eventosLeidos sesionesCrudas=${sesiones.size} appsAbiertasSinCerrar=${tiemposInicio.size}"
-        )
-
         val noSupervisadas = NexoDatabase.getInstance(context).supervisedAppDao()
             .obtenerPackagesNoSupervisados()
             .toSet()
 
-        val sesionesFiltradas = sesiones.filterNot { it.packageName in noSupervisadas }
-        Log.d(
-            DEBUG_TAG,
-            "[UsageStatsRepository] calcularSesiones appsNoSupervisadas=${noSupervisadas.size} sesionesTrasFiltroSupervision=${sesionesFiltradas.size}"
-        )
-
-        return sesionesFiltradas
+        return sesiones.filterNot { it.packageName in noSupervisadas }
     }
 
     private suspend fun calcularTiemposViaEventos(context: Context, startTime: Long, endTime: Long): Map<String, Long> {
