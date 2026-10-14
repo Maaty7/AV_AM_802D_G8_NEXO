@@ -32,17 +32,6 @@ sealed interface ResultadoConsultaUso {
 
 object UsageStatsRepository {
 
-    suspend fun obtenerUsoDeHoy(context: Context): List<AppUsageInfo> = withContext(Dispatchers.IO) {
-        val calendar = Calendar.getInstance()
-        val endTime = calendar.timeInMillis
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        val startTime = calendar.timeInMillis
-        consultar(context, startTime, endTime)
-    }
-
     /**
      * [fechaBase] es el día al que pertenece la jornada (el día en que
      * TERMINA, no necesariamente "hoy" si se llama desde un contexto que

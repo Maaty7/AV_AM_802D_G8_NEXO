@@ -72,14 +72,14 @@ fun NexoNavHost(navController: NavHostController = rememberNavController()) {
         composable(NexoDestinations.PERMISOS) {
             PermisosScreen(onContinuar = {
                 navController.navigate(NexoDestinations.HOME) {
-                    popUpTo(NexoDestinations.SPLASH) { inclusive = true }
+                    popUpTo(navController.graph.id) { inclusive = true }
                 }
             })
         }
         composable(NexoDestinations.VERIFICAR_PIN) {
             VerificarPinScreen(onPinCorrecto = {
                 navController.navigate(NexoDestinations.HOME) {
-                    popUpTo(NexoDestinations.SPLASH) { inclusive = true }
+                    popUpTo(navController.graph.id) { inclusive = true }
                 }
             })
         }

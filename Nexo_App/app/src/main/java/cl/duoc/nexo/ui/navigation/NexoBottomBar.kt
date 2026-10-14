@@ -12,14 +12,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
-private data class NexoTab(val route: String, val label: String, val icon: ImageVector)
+private data class NexoTab(
+    val route: String,
+    val label: String,
+    val icon: ImageVector,
+    val fontSize: TextUnit = TextUnit.Unspecified
+)
 
 private val tabs = listOf(
     NexoTab(NexoDestinations.HOME, "Inicio", Icons.Filled.Home),
-    NexoTab(NexoDestinations.ESTADISTICAS, "Stats", Icons.Filled.BarChart),
+    NexoTab(NexoDestinations.ESTADISTICAS, "Estadísticas", Icons.Filled.BarChart, fontSize = 10.sp),
     NexoTab(NexoDestinations.HORARIOS, "Horarios", Icons.Filled.Schedule),
     NexoTab(NexoDestinations.CONFIGURACION, "Ajustes", Icons.Filled.Settings)
 )
@@ -43,7 +50,7 @@ fun NexoBottomBar(navController: NavHostController) {
                     }
                 },
                 icon = { Icon(tab.icon, contentDescription = tab.label) },
-                label = { Text(tab.label) }
+                label = { Text(tab.label, fontSize = tab.fontSize, maxLines = 1) }
             )
         }
     }

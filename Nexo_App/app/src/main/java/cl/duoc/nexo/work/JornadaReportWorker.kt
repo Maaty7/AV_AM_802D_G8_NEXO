@@ -13,6 +13,8 @@ import cl.duoc.nexo.monitoring.ResultadoConsultaUso
 import cl.duoc.nexo.monitoring.UsageAccessPermission
 import cl.duoc.nexo.monitoring.UsageStatsRepository
 import cl.duoc.nexo.utils.FeriadosChile
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 
 private const val TAG = "JornadaReportWorker"
@@ -145,11 +147,17 @@ class JornadaReportWorker(
         return Result.success()
     }
 
-    /** Siempre deja programada la próxima ejecución, sin importar si esta terminó generando informe, saltándolo, o con error. */
-    private suspend fun reprogramarProximaEjecucion(scheduleId: Int) {
+    /**
+     * Siempre deja programada la próxima ejecución, sin importar si esta
+     * terminó generando informe, saltándolo, o con error — incluso si el
+     * propio Worker fue cancelado (ej. WorkManager lo detiene por cuota),
+     * ya que [NonCancellable] evita que las llamadas suspendidas de acá
+     * adentro aborten de inmediato por la cancelación ya en curso.
+     */
+    private suspend fun reprogramarProximaEjecucion(scheduleId: Int) = withContext(NonCancellable) {
         try {
             val db = NexoDatabase.getInstance(applicationContext)
-            val jornada = db.scheduleDao().obtenerPorId(scheduleId) ?: return
+            val jornada = db.scheduleDao().obtenerPorId(scheduleId) ?: return@withContext
             if (jornada.activo) {
                 JornadaReportScheduler.programar(applicationContext, jornada)
             } else {

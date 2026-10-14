@@ -16,12 +16,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,16 +32,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.domain.AppUsageInfo
 import cl.duoc.nexo.domain.FranjaUso
+import cl.duoc.nexo.monitoring.UsageAccessPermission
 import cl.duoc.nexo.ui.navigation.NexoBottomBar
+import cl.duoc.nexo.ui.theme.NexoAmberBg
 import cl.duoc.nexo.ui.theme.NexoCoral
 import cl.duoc.nexo.ui.theme.NexoDeep
 import cl.duoc.nexo.ui.theme.NexoGreen
@@ -61,6 +70,19 @@ fun EstadisticasScreen(
     // la distribución se vea completa, no solo las categorías con actividad.
     val categorias = coloresPorCategoria.keys.associateWith { minutosRegistrados[it] ?: 0L }
     val hayActividad = categorias.values.any { it > 0 }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refrescarPermisoUso()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Scaffold(
         bottomBar = { NexoBottomBar(navController) }
@@ -89,7 +111,9 @@ fun EstadisticasScreen(
                     modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
                 )
 
-                if (!hayActividad) {
+                if (!viewModel.permisoUsoConcedido) {
+                    AvisoPermisoUso()
+                } else if (!hayActividad) {
                     Text(
                         text = "Aún no hay actividad registrada en esta jornada.",
                         color = NexoMute,
@@ -115,6 +139,36 @@ fun EstadisticasScreen(
                     SeccionLineaDeTiempo(viewModel.usoPorFranjas)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AvisoPermisoUso() {
+    val context = LocalContext.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(NexoAmberBg, RoundedCornerShape(14.dp))
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Falta el permiso de acceso a datos de uso",
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.5.sp
+        )
+        Text(
+            text = "Sin este permiso NEXO no puede medir el uso real del teléfono.",
+            color = NexoMute,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(top = 2.dp, bottom = 12.dp)
+        )
+        Button(
+            onClick = { UsageAccessPermission.openSettings(context) },
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = NexoDeep)
+        ) {
+            Text("Abrir ajustes")
         }
     }
 }

@@ -1,6 +1,7 @@
 package cl.duoc.nexo.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,10 +14,13 @@ import cl.duoc.nexo.domain.FranjaUso
 import cl.duoc.nexo.domain.jornadaEstaActiva
 import cl.duoc.nexo.domain.minutosDelDia
 import cl.duoc.nexo.monitoring.ResultadoConsultaUso
+import cl.duoc.nexo.monitoring.UsageAccessPermission
 import cl.duoc.nexo.monitoring.UsageStatsRepository
 import cl.duoc.nexo.work.JornadaReportScheduler
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+
+private const val TAG = "JornadaActivaViewModel"
 
 class JornadaActivaViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -37,16 +41,28 @@ class JornadaActivaViewModel(application: Application) : AndroidViewModel(applic
     var usoPorFranjas by mutableStateOf<List<FranjaUso>>(emptyList())
         private set
 
+    var permisoUsoConcedido by mutableStateOf(UsageAccessPermission.isGranted(application))
+        private set
+
     init {
         scheduleDao.observarTodas()
             .onEach { lista ->
-                val jornada = elegirJornadaReferencia(lista)
-                jornadaReferencia = jornada
-                jornadaEstaActiva = jornada?.let { estaActivaAhora(it) } ?: false
-                refrescarUso()
-                JornadaReportScheduler.reprogramarTodas(getApplication(), lista)
+                try {
+                    val jornada = elegirJornadaReferencia(lista)
+                    jornadaReferencia = jornada
+                    jornadaEstaActiva = jornada?.let { estaActivaAhora(it) } ?: false
+                    refrescarUso()
+                    JornadaReportScheduler.reprogramarTodas(getApplication(), lista)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error al refrescar el estado de la jornada activa", e)
+                }
             }
             .launchIn(viewModelScope)
+    }
+
+    /** Vuelve a revisar el permiso de Usage Access — se llama al reanudar Inicio/Estadísticas. */
+    fun refrescarPermisoUso() {
+        permisoUsoConcedido = UsageAccessPermission.isGranted(getApplication())
     }
 
     suspend fun refrescarUso() {
