@@ -14,4 +14,8 @@ interface ReportDao {
 
     @Query("SELECT * FROM reports ORDER BY generadoEn DESC")
     fun observarTodos(): Flow<List<ReportEntity>>
+
+    /** Para no duplicar el informe de una jornada si el Worker se re-ejecuta para el mismo día. */
+    @Query("SELECT COUNT(*) FROM reports WHERE scheduleId = :scheduleId AND fecha = :fecha")
+    suspend fun contarPorJornadaYFecha(scheduleId: Int, fecha: String): Int
 }

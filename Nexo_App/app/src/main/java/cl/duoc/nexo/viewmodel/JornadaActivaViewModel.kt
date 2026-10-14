@@ -12,6 +12,7 @@ import cl.duoc.nexo.domain.AppUsageInfo
 import cl.duoc.nexo.domain.FranjaUso
 import cl.duoc.nexo.domain.jornadaEstaActiva
 import cl.duoc.nexo.domain.minutosDelDia
+import cl.duoc.nexo.monitoring.ResultadoConsultaUso
 import cl.duoc.nexo.monitoring.UsageStatsRepository
 import cl.duoc.nexo.work.JornadaReportScheduler
 import kotlinx.coroutines.flow.launchIn
@@ -60,8 +61,14 @@ class JornadaActivaViewModel(application: Application) : AndroidViewModel(applic
             jornada.horaInicio,
             jornada.horaTermino
         )
-        appsUsadas = resultado
-        minutosTotales = resultado.sumOf { it.totalTimeMinutes }
+        // Rango inválido es un caso raro en vivo (solo pasaría con una jornada
+        // mal configurada) — se muestra igual que "sin uso" en el dashboard.
+        val apps = when (resultado) {
+            is ResultadoConsultaUso.Exito -> resultado.apps
+            is ResultadoConsultaUso.RangoInvalido -> emptyList()
+        }
+        appsUsadas = apps
+        minutosTotales = apps.sumOf { it.totalTimeMinutes }
         usoPorFranjas = UsageStatsRepository.obtenerUsoPorFranjas(
             getApplication(),
             jornada.horaInicio,
