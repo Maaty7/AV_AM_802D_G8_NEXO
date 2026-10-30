@@ -35,6 +35,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.data.local.entities.ScheduleEntity
 import cl.duoc.nexo.ui.navigation.NexoBottomBar
+import cl.duoc.nexo.ui.navigation.NexoDestinations
 import cl.duoc.nexo.ui.security.VerificarPinDialog
 import cl.duoc.nexo.ui.theme.NexoBorder
 import cl.duoc.nexo.ui.theme.NexoCoral
@@ -254,6 +256,24 @@ fun HorariosScreen(
                                 color = if (seleccionado) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
+                }
+
+                if (jornada != null) {
+                    var cantidadPausas by remember(jornada) { mutableStateOf(0) }
+                    LaunchedEffect(jornada) {
+                        cantidadPausas = viewModel.contarPausas(jornada.id)
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedButton(
+                        onClick = {
+                            mostrarModal = false
+                            navController.navigate("${NexoDestinations.PAUSAS_JORNADA}/${jornada.id}")
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Recreos y descansos ($cantidadPausas)")
                     }
                 }
 

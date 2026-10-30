@@ -14,6 +14,7 @@ import cl.duoc.nexo.ui.permissions.PermisosScreen
 import cl.duoc.nexo.ui.reports.InformesScreen
 import cl.duoc.nexo.ui.schedule.ExcepcionesScreen
 import cl.duoc.nexo.ui.schedule.HorariosScreen
+import cl.duoc.nexo.ui.schedule.PausasJornadaScreen
 import cl.duoc.nexo.ui.security.CambiarPinScreen
 import cl.duoc.nexo.ui.security.CrearPinScreen
 import cl.duoc.nexo.ui.security.VerificarPinScreen
@@ -112,6 +113,13 @@ fun NexoNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable(NexoDestinations.EXCEPCIONES) {
             ExcepcionesScreen(navController)
+        }
+        composable(
+            route = "${NexoDestinations.PAUSAS_JORNADA}/{scheduleId}",
+            arguments = listOf(navArgument("scheduleId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val scheduleId = backStackEntry.arguments?.getInt("scheduleId") ?: -1
+            PausasJornadaScreen(navController = navController, scheduleId = scheduleId)
         }
     }
 }

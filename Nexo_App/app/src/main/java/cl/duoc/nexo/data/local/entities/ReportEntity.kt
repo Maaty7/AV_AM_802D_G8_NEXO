@@ -25,5 +25,15 @@ data class ReportEntity(
      * tabla hija — solo se usa para pintar el PDF, nunca se consulta en SQL.
      */
     val appsUsadas: String = "",
+    /**
+     * Columnas agregadas por MIGRATION_8_9 junto con la tabla pausas_jornada,
+     * pero sin uso: el uso en pausas se descarta del cálculo, no se guarda.
+     * Se mantienen declaradas acá únicamente porque ya existen físicamente en
+     * instalaciones que corrieron esa migración — removerlas del código haría
+     * que Room las vea como "columnas inesperadas" en reports y falle la
+     * validación post-migración ("Migration didn't properly handle: reports").
+     */
+    val minutosPausas: Long = 0L,
+    val appsUsadasPausas: String = "",
     val generadoEn: Long
 )

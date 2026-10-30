@@ -104,6 +104,7 @@ class JornadaReportWorker(
             applicationContext,
             jornada.horaInicio,
             jornada.horaTermino,
+            jornada.id,
             fechaObjetivo
         )
 
