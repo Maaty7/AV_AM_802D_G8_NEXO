@@ -1,0 +1,13 @@
+# Entorno virtual
+venv/
+
+# Variables de entorno locales (usa .env.example como plantilla)
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Django
+db.sqlite3
+staticfiles/
