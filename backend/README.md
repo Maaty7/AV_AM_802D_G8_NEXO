@@ -75,6 +75,43 @@ python manage.py runserver
 El panel de administración queda en `http://127.0.0.1:8000/admin/` — ahí se
 ven Usuarios, Dispositivos e Informes (con sus apps usadas como inline).
 
+## Acceder desde el teléfono (misma red local)
+
+Por defecto `runserver` solo escucha en `127.0.0.1` (localhost del propio
+computador) — el teléfono no puede llegar ahí. Para que la app Android pueda
+conectarse, el servidor debe escuchar en todas las interfaces de red:
+
+```powershell
+python manage.py runserver 0.0.0.0:8000
+```
+
+Esto NO expone el servidor a internet, solo a los dispositivos de tu red
+local (el teléfono tiene que estar conectado a la misma red/router que el
+computador). La IP de tu computador en esa red debe estar en
+`DJANGO_ALLOWED_HOSTS` dentro de tu `.env` local (ya no en `.env.example`,
+nunca subas tu IP real ahí) — obténla con:
+
+```powershell
+ipconfig
+```
+
+y busca la "Dirección IPv4" del adaptador conectado a tu red (Wi-Fi o
+Ethernet, el que esté en la misma red que el teléfono).
+
+Windows además bloquea por firewall las conexiones entrantes a `runserver`
+desde otros equipos de la red por defecto. Hay que abrir el puerto 8000 una
+vez (comando de PowerShell **como administrador**, solo para redes
+privadas):
+
+```powershell
+New-NetFirewallRule -DisplayName "NEXO backend (dev)" -Direction Inbound -Protocol TCP -LocalPort 8000 -Profile Private -Action Allow
+```
+
+La app Android (en su build de debug) apunta a `http://<tu IP>:8000/` —
+confirma que el teléfono y el computador estén en la misma red, que
+`runserver` esté corriendo con `0.0.0.0:8000`, y que la regla del firewall
+esté creada, antes de probar la vinculación de cuenta desde el teléfono.
+
 ## Tests
 
 ```powershell

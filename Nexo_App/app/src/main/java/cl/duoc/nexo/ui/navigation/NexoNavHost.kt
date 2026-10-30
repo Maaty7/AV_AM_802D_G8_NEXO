@@ -33,6 +33,7 @@ import cl.duoc.nexo.ui.settings.AcercaDeScreen
 import cl.duoc.nexo.ui.settings.AplicacionesSupervisadasScreen
 import cl.duoc.nexo.ui.settings.ConfiguracionScreen
 import cl.duoc.nexo.ui.settings.EditarCorreoScreen
+import cl.duoc.nexo.ui.settings.VincularCuentaScreen
 import cl.duoc.nexo.ui.splash.SplashScreen
 import cl.duoc.nexo.ui.stats.EstadisticasScreen
 import kotlinx.coroutines.flow.first
@@ -158,6 +159,9 @@ fun NexoNavHost(navController: NavHostController = rememberNavController()) {
             ) { backStackEntry ->
                 val scheduleId = backStackEntry.arguments?.getInt("scheduleId") ?: -1
                 PausasJornadaScreen(navController = navController, scheduleId = scheduleId)
+            }
+            composable(NexoDestinations.VINCULAR_CUENTA) {
+                VincularCuentaScreen(navController)
             }
         }
 

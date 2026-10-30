@@ -6,6 +6,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import cl.duoc.nexo.data.local.database.NexoDatabase
 import cl.duoc.nexo.data.local.entities.ReportEntity
+import cl.duoc.nexo.data.local.prefs.SesionBackendPrefs
 import cl.duoc.nexo.domain.abreviacionDia
 import cl.duoc.nexo.domain.calcularFechaObjetivo
 import cl.duoc.nexo.domain.serializarAppsUsadas
@@ -125,7 +126,7 @@ class JornadaReportWorker(
         val porCategoria = usos.groupBy { it.categoria }
             .mapValues { (_, apps) -> apps.sumOf { it.totalTimeMinutes } }
 
-        db.reportDao().insertar(
+        val nuevoId = db.reportDao().insertar(
             ReportEntity(
                 scheduleId = jornada.id,
                 nombreJornada = jornada.nombre,
@@ -144,6 +145,11 @@ class JornadaReportWorker(
                 generadoEn = System.currentTimeMillis()
             )
         )
+
+        // Solo si hay una cuenta vinculada — si no, la app no intenta usar la red.
+        if (SesionBackendPrefs.estaVinculada(applicationContext)) {
+            SubirInformeScheduler.encolar(applicationContext, nuevoId.toInt())
+        }
 
         return Result.success()
     }

@@ -21,10 +21,20 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Solo alcanzable dentro de la red local — ver network_security_config
+            // de debug (src/debug/res/xml), que permite tráfico sin cifrar
+            // únicamente hacia esta IP. En release no existe ese permiso: ahí
+            // solo HTTPS funciona.
+            buildConfigField("String", "BASE_URL", "\"http://192.168.1.116:8000/\"")
+        }
         release {
             optimization {
                 enable = false
             }
+            // Placeholder: no hay backend desplegado en la nube todavía. Cuando
+            // exista, reemplazar por la URL HTTPS real.
+            buildConfigField("String", "BASE_URL", "\"https://api.nexo.example.com/\"")
         }
     }
     compileOptions {
@@ -33,6 +43,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

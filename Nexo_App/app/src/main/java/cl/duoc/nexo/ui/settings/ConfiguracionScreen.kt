@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
@@ -73,6 +74,9 @@ fun ConfiguracionScreen(
         },
         OpcionConfig(Icons.Filled.EventBusy, "Días sin clases") {
             navController.navigate(NexoDestinations.EXCEPCIONES)
+        },
+        OpcionConfig(Icons.Filled.CloudSync, "Vincular cuenta") {
+            navController.navigate(NexoDestinations.VINCULAR_CUENTA)
         },
         OpcionConfig(Icons.Filled.Info, "Acerca de NEXO") {
             navController.navigate(NexoDestinations.ACERCA_DE)
