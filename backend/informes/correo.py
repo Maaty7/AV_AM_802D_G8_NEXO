@@ -1,6 +1,9 @@
+import datetime
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from django.utils import timezone
 
 from .models import Informe
 
@@ -12,6 +15,18 @@ NOMBRES_CATEGORIAS = [
     ("Juegos", "minutos_juegos"),
     ("Otros", "minutos_otros"),
 ]
+
+
+def es_informe_reciente(fecha: datetime.date) -> bool:
+    """
+    Evita un envío masivo si alguna vez se sincronizan de golpe muchos
+    informes viejos (ej. una instalación nueva subiendo todo su historial
+    local): solo se considera "reciente" la jornada de hoy o de ayer.
+    timezone.localtime() usa settings.TIME_ZONE (America/Santiago), no la
+    hora del sistema operativo donde corra el proceso.
+    """
+    hoy = timezone.localtime(timezone.now()).date()
+    return fecha in (hoy, hoy - datetime.timedelta(days=1))
 
 
 def enviar_resumen_informe_por_correo(informe: Informe, apps_datos: list[dict]) -> None:

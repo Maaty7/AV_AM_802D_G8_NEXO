@@ -1,7 +1,9 @@
+import datetime
 from unittest.mock import patch
 
 from django.core import mail
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient, APITestCase
@@ -12,12 +14,18 @@ from dispositivos.models import Dispositivo
 from .models import Informe
 
 
+def fecha_hace(dias: int) -> str:
+    """Fecha ISO relativa a "hoy" en hora de Chile — nunca una fecha hardcodeada que se vuelva vieja con el tiempo."""
+    hoy = timezone.localtime(timezone.now()).date()
+    return (hoy - datetime.timedelta(days=dias)).isoformat()
+
+
 def payload_informe(**overrides):
     base = {
         "dispositivo_uuid": "11111111-1111-1111-1111-111111111111",
         "dispositivo_nombre": "Teléfono de Ana",
         "nombre_jornada": "Horario escolar",
-        "fecha": "2026-10-20",
+        "fecha": fecha_hace(0),  # hoy, siempre dentro de la ventana de envío de correo
         "hora_inicio": "08:00:00",
         "hora_termino": "14:00:00",
         "dias": "LU, MA, MI, JU, VI",
@@ -176,3 +184,40 @@ class InformesTests(APITestCase):
         self.assertEqual(Informe.objects.count(), 1)
         self.assertFalse(Informe.objects.first().correo_enviado)
         self.assertEqual(len(mail.outbox), 0)
+
+    def test_informe_de_hoy_envia_correo(self):
+        respuesta = self.client.post(self.url, payload_informe(fecha=fecha_hace(0)), format="json")
+
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertTrue(Informe.objects.first().correo_enviado)
+
+    def test_informe_de_ayer_envia_correo(self):
+        respuesta = self.client.post(self.url, payload_informe(fecha=fecha_hace(1)), format="json")
+
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertTrue(Informe.objects.first().correo_enviado)
+
+    def test_informe_de_hace_5_dias_no_envia_correo(self):
+        respuesta = self.client.post(self.url, payload_informe(fecha=fecha_hace(5)), format="json")
+
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertFalse(Informe.objects.first().correo_enviado)
+
+    def test_sincronizar_10_informes_antiguos_no_envia_ninguno(self):
+        for indice in range(10):
+            respuesta = self.client.post(
+                self.url,
+                payload_informe(
+                    nombre_jornada=f"Jornada antigua {indice}",
+                    fecha=fecha_hace(10 + indice),
+                ),
+                format="json",
+            )
+            self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+
+        self.assertEqual(Informe.objects.count(), 10)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertFalse(Informe.objects.filter(correo_enviado=True).exists())

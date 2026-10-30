@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from dispositivos.models import Dispositivo
 
-from .correo import enviar_resumen_informe_por_correo
+from .correo import enviar_resumen_informe_por_correo, es_informe_reciente
 from .models import AppUso, Informe
 
 logger = logging.getLogger(__name__)
@@ -67,11 +67,14 @@ class InformeEntradaSerializer(serializers.ModelSerializer):
         informe.apps.all().delete()
         AppUso.objects.bulk_create(AppUso(informe=informe, **app) for app in apps_datos)
 
-        # Correo de resumen solo la primera vez que este informe se guarda con
-        # éxito — si el envío falla, correo_enviado queda en False y el
-        # próximo re-post (reintento normal de subida) tiene otra oportunidad,
-        # pero el informe ya quedó guardado arriba de todas formas.
-        if not informe.correo_enviado:
+        # Correo de resumen solo si: (a) todavía no se envió con éxito antes
+        # — si el envío falla, correo_enviado queda en False y el próximo
+        # re-post (reintento normal de subida) tiene otra oportunidad — y
+        # (b) la jornada es de hoy o de ayer, para no mandar un correo por
+        # cada informe si alguna vez se sincroniza de golpe todo un
+        # historial viejo. Un informe antiguo queda con correo_enviado=False
+        # para siempre, a propósito: nunca se reintenta solo por ser viejo.
+        if not informe.correo_enviado and es_informe_reciente(informe.fecha):
             try:
                 enviar_resumen_informe_por_correo(informe, apps_datos)
                 informe.correo_enviado = True
