@@ -1,0 +1,7 @@
+Hola{% if nombre %} {{ nombre }}{% endif %},
+
+Tu código de verificación de NEXO es: {{ codigo }}
+
+Vence en 10 minutos. Si no fuiste tú quien intentó entrar a tu cuenta de NEXO, puedes ignorar este correo.
+
+— NEXO

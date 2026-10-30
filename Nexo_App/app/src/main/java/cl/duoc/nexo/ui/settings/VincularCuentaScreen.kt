@@ -83,16 +83,29 @@ fun VincularCuentaScreen(
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
                 }
+                viewModel.mensajeCodigo?.let { mensaje ->
+                    Text(
+                        text = mensaje,
+                        color = NexoGreen,
+                        fontSize = 12.5.sp,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                }
 
-                if (viewModel.vinculada) {
-                    SeccionVinculada(
+                when {
+                    viewModel.vinculada -> SeccionVinculada(
                         email = viewModel.emailVinculado ?: "—",
                         cargando = viewModel.cargando,
                         onSincronizar = { viewModel.sincronizarAhora() },
                         onDesvincular = { accionPendiente = { viewModel.desvincular() } }
                     )
-                } else {
-                    SeccionSinVincular(
+                    viewModel.desafioPendiente != null -> SeccionVerificarCodigo(
+                        cargando = viewModel.cargando,
+                        onVerificar = { codigo -> viewModel.verificarCodigo(codigo) },
+                        onReenviar = { viewModel.reenviarCodigo() },
+                        onCancelar = { viewModel.cancelarVerificacion() }
+                    )
+                    else -> SeccionSinVincular(
                         cargando = viewModel.cargando,
                         onRegistrar = { email, password, nombre ->
                             accionPendiente = { viewModel.registrar(email, password, nombre) }
@@ -151,6 +164,58 @@ private fun SeccionVinculada(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text("Desvincular")
+    }
+}
+
+@Composable
+private fun SeccionVerificarCodigo(
+    cargando: Boolean,
+    onVerificar: (codigo: String) -> Unit,
+    onReenviar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    var codigo by remember { mutableStateOf("") }
+
+    Text(
+        text = "Ingresa el código de 6 dígitos que te enviamos por correo.",
+        fontSize = 13.sp,
+        modifier = Modifier.padding(bottom = 16.dp)
+    )
+
+    OutlinedTextField(
+        value = codigo,
+        onValueChange = { nuevoValor -> if (nuevoValor.length <= 6 && nuevoValor.all(Char::isDigit)) codigo = nuevoValor },
+        label = { Text("Código") },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+        shape = RoundedCornerShape(10.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(20.dp))
+
+    Button(
+        onClick = { onVerificar(codigo) },
+        enabled = !cargando && codigo.length == 6,
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = NexoDeep),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(if (cargando) "Verificando…" else "Verificar")
+    }
+
+    Spacer(modifier = Modifier.height(10.dp))
+
+    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+        TextButton(onClick = onCancelar, enabled = !cargando) {
+            Text("Cancelar", fontSize = 12.5.sp)
+        }
+        TextButton(onClick = onReenviar, enabled = !cargando) {
+            Text("Reenviar código", fontSize = 12.5.sp)
+        }
     }
 }
 

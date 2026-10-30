@@ -1,8 +1,13 @@
+import logging
+
 from rest_framework import serializers
 
 from dispositivos.models import Dispositivo
 
+from .correo import enviar_resumen_informe_por_correo
 from .models import AppUso, Informe
+
+logger = logging.getLogger(__name__)
 
 
 class AppUsoSerializer(serializers.ModelSerializer):
@@ -61,6 +66,19 @@ class InformeEntradaSerializer(serializers.ModelSerializer):
         # Reemplaza por completo la lista de apps — "se actualiza, no se duplica".
         informe.apps.all().delete()
         AppUso.objects.bulk_create(AppUso(informe=informe, **app) for app in apps_datos)
+
+        # Correo de resumen solo la primera vez que este informe se guarda con
+        # éxito — si el envío falla, correo_enviado queda en False y el
+        # próximo re-post (reintento normal de subida) tiene otra oportunidad,
+        # pero el informe ya quedó guardado arriba de todas formas.
+        if not informe.correo_enviado:
+            try:
+                enviar_resumen_informe_por_correo(informe, apps_datos)
+                informe.correo_enviado = True
+                informe.save(update_fields=["correo_enviado"])
+            except Exception:
+                logger.exception("No se pudo enviar el correo de resumen del informe %s", informe.id)
+
         return informe
 
 

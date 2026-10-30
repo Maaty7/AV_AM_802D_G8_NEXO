@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; color: #1a1a2e;">
+    <h2 style="color: #1c7293;">Informe de jornada — {{ informe.nombre_jornada }}</h2>
+    <p>
+        <strong>Fecha:</strong> {{ informe.fecha }}<br>
+        <strong>Horario:</strong> {{ informe.hora_inicio }} – {{ informe.hora_termino }}<br>
+        <strong>Tiempo total:</strong> {{ informe.minutos_totales }} min
+    </p>
+
+    <h3>Minutos por categoría</h3>
+    <ul>
+        {% for nombre, minutos in categorias %}<li>{{ nombre }}: {{ minutos }} min</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Apps más usadas</h3>
+    <ul>
+        {% for app in top_apps %}<li>{{ app.nombre }} ({{ app.minutos }} min)</li>
+        {% endfor %}
+    </ul>
+
+    <p style="color: #6b7280; font-size: 13px;">— NEXO</p>
+</body>
+</html>

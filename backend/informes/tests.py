@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+from django.core import mail
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -150,3 +153,26 @@ class InformesTests(APITestCase):
         respuesta_otro = cliente_otro.get(self.url)
         self.assertEqual(len(respuesta_otro.data), 1)
         self.assertEqual(respuesta_otro.data[0]["nombre_jornada"], "Otro horario")
+
+    def test_informe_nuevo_envia_un_correo_de_resumen(self):
+        self.client.post(self.url, payload_informe(), format="json")
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["ana@example.com"])
+        self.assertIn("Horario escolar", mail.outbox[0].subject)
+        self.assertTrue(Informe.objects.first().correo_enviado)
+
+    def test_informe_repetido_no_reenvia_el_correo(self):
+        self.client.post(self.url, payload_informe(), format="json")
+        self.client.post(self.url, payload_informe(minutos_totales=120), format="json")
+
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_falla_al_enviar_el_correo_no_rompe_la_subida_del_informe(self):
+        with patch("informes.serializers.enviar_resumen_informe_por_correo", side_effect=RuntimeError("SMTP caído")):
+            respuesta = self.client.post(self.url, payload_informe(), format="json")
+
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Informe.objects.count(), 1)
+        self.assertFalse(Informe.objects.first().correo_enviado)
+        self.assertEqual(len(mail.outbox), 0)

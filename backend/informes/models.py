@@ -40,6 +40,12 @@ class Informe(models.Model):
     # Epoch millis — igual que ReportEntity.generadoEn (System.currentTimeMillis()).
     generado_en = models.BigIntegerField()
 
+    # Para no reenviar el correo de resumen en cada actualización idempotente
+    # del mismo informe — se marca True recién cuando el envío tuvo éxito,
+    # así que si falló, el próximo re-post (el reintento normal del Worker
+    # de la app) tiene otra oportunidad de enviarlo.
+    correo_enviado = models.BooleanField(default=False)
+
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 

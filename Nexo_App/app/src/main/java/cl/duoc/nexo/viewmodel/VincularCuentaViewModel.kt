@@ -10,10 +10,14 @@ import cl.duoc.nexo.BuildConfig
 import cl.duoc.nexo.data.local.database.NexoDatabase
 import cl.duoc.nexo.data.local.prefs.SesionBackendPrefs
 import cl.duoc.nexo.data.remote.NexoApiClient
-import cl.duoc.nexo.data.remote.ResultadoAuth
+import cl.duoc.nexo.data.remote.ResultadoDesafio
+import cl.duoc.nexo.data.remote.ResultadoReenvio
 import cl.duoc.nexo.data.remote.ResultadoSubida
+import cl.duoc.nexo.data.remote.ResultadoVerificacion
 import cl.duoc.nexo.domain.construirJsonInforme
 import kotlinx.coroutines.launch
+
+private const val MENSAJE_ERROR_RED = "No se pudo conectar al servidor. Revisa tu conexión y que el servidor esté corriendo."
 
 class VincularCuentaViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -21,6 +25,10 @@ class VincularCuentaViewModel(application: Application) : AndroidViewModel(appli
         private set
 
     var emailVinculado by mutableStateOf(SesionBackendPrefs.obtenerEmail(application))
+        private set
+
+    /** Si no es null, hay un registro/login pendiente de verificar con el código de 6 dígitos. */
+    var desafioPendiente by mutableStateOf<String?>(null)
         private set
 
     var cargando by mutableStateOf(false)
@@ -32,30 +40,78 @@ class VincularCuentaViewModel(application: Application) : AndroidViewModel(appli
     var mensajeSincronizacion by mutableStateOf<String?>(null)
         private set
 
+    /** Mensaje corto para la pantalla del código (ej. "Te enviamos un código nuevo"). */
+    var mensajeCodigo by mutableStateOf<String?>(null)
+        private set
+
     fun registrar(email: String, password: String, nombre: String) {
-        autenticar { NexoApiClient.registrar(BuildConfig.BASE_URL, email, password, nombre) }
+        iniciarDesafio { NexoApiClient.registrar(BuildConfig.BASE_URL, email, password, nombre) }
     }
 
     fun iniciarSesion(email: String, password: String) {
-        autenticar { NexoApiClient.iniciarSesion(BuildConfig.BASE_URL, email, password) }
+        iniciarDesafio { NexoApiClient.iniciarSesion(BuildConfig.BASE_URL, email, password) }
     }
 
-    private fun autenticar(llamada: suspend () -> ResultadoAuth) {
+    private fun iniciarDesafio(llamada: suspend () -> ResultadoDesafio) {
         if (cargando) return
         cargando = true
         error = null
         viewModelScope.launch {
             when (val resultado = llamada()) {
-                is ResultadoAuth.Exito -> {
-                    SesionBackendPrefs.guardarSesion(getApplication(), resultado.token, resultado.email)
-                    vinculada = true
-                    emailVinculado = resultado.email
+                is ResultadoDesafio.Exito -> {
+                    desafioPendiente = resultado.desafio
+                    mensajeCodigo = "Te enviamos un código de verificación por correo."
                 }
-                is ResultadoAuth.ErrorCredenciales -> error = resultado.mensaje
-                is ResultadoAuth.ErrorDeRed -> error = "No se pudo conectar al servidor. Revisa tu conexión y que el servidor esté corriendo."
+                is ResultadoDesafio.ErrorCredenciales -> error = resultado.mensaje
+                is ResultadoDesafio.ErrorDeRed -> error = MENSAJE_ERROR_RED
             }
             cargando = false
         }
+    }
+
+    /** Solo si el código es correcto, vigente y no usado se guarda el token — recién ahí queda "vinculada". */
+    fun verificarCodigo(codigo: String) {
+        val desafio = desafioPendiente ?: return
+        if (cargando) return
+        cargando = true
+        error = null
+        viewModelScope.launch {
+            when (val resultado = NexoApiClient.verificarCodigo(BuildConfig.BASE_URL, desafio, codigo)) {
+                is ResultadoVerificacion.Exito -> {
+                    SesionBackendPrefs.guardarSesion(getApplication(), resultado.token, resultado.email)
+                    vinculada = true
+                    emailVinculado = resultado.email
+                    desafioPendiente = null
+                    mensajeCodigo = null
+                }
+                is ResultadoVerificacion.ErrorCodigo -> error = resultado.mensaje
+                is ResultadoVerificacion.ErrorDeRed -> error = MENSAJE_ERROR_RED
+            }
+            cargando = false
+        }
+    }
+
+    /** El backend aplica el límite de 60s entre reenvíos — acá solo se muestra el error si lo rechaza. */
+    fun reenviarCodigo() {
+        val desafio = desafioPendiente ?: return
+        if (cargando) return
+        cargando = true
+        error = null
+        viewModelScope.launch {
+            when (val resultado = NexoApiClient.reenviarCodigo(BuildConfig.BASE_URL, desafio)) {
+                is ResultadoReenvio.Exito -> mensajeCodigo = "Te enviamos un código nuevo."
+                is ResultadoReenvio.Error -> error = resultado.mensaje
+                is ResultadoReenvio.ErrorDeRed -> error = MENSAJE_ERROR_RED
+            }
+            cargando = false
+        }
+    }
+
+    /** Vuelve al formulario de email/contraseña sin completar la verificación. */
+    fun cancelarVerificacion() {
+        desafioPendiente = null
+        mensajeCodigo = null
+        error = null
     }
 
     fun desvincular() {
@@ -111,7 +167,7 @@ class VincularCuentaViewModel(application: Application) : AndroidViewModel(appli
                     error = "La sesión ya no es válida. Vincula la cuenta de nuevo."
                 }
                 sinRed && exitosos == 0 -> {
-                    error = "No se pudo conectar al servidor. Revisa tu conexión y que el servidor esté corriendo."
+                    error = MENSAJE_ERROR_RED
                 }
                 else -> {
                     mensajeSincronizacion = "$exitosos de ${informes.size} informes sincronizados."

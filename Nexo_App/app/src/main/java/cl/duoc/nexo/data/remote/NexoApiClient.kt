@@ -11,11 +11,29 @@ import java.net.URL
 private const val TAG = "NexoApiClient"
 private const val TIMEOUT_MS = 15_000
 
-/** Resultado de registrarse o iniciar sesión contra /api/cuentas/. */
-sealed interface ResultadoAuth {
-    data class Exito(val token: String, val email: String, val nombre: String) : ResultadoAuth
-    data class ErrorCredenciales(val mensaje: String) : ResultadoAuth
-    data object ErrorDeRed : ResultadoAuth
+/**
+ * Resultado de registrarse o iniciar sesión — ninguno de los dos devuelve
+ * un token directo: el backend exige verificar un código de 6 dígitos
+ * enviado por correo (2FA) antes de entregar uno.
+ */
+sealed interface ResultadoDesafio {
+    data class Exito(val desafio: String) : ResultadoDesafio
+    data class ErrorCredenciales(val mensaje: String) : ResultadoDesafio
+    data object ErrorDeRed : ResultadoDesafio
+}
+
+/** Resultado de verificar el código de 6 dígitos — el único lugar donde se obtiene un token. */
+sealed interface ResultadoVerificacion {
+    data class Exito(val token: String, val email: String, val nombre: String) : ResultadoVerificacion
+    data class ErrorCodigo(val mensaje: String) : ResultadoVerificacion
+    data object ErrorDeRed : ResultadoVerificacion
+}
+
+/** Resultado de pedir que se reenvíe el código (respeta el límite de 60s que ya aplica el backend). */
+sealed interface ResultadoReenvio {
+    data object Exito : ResultadoReenvio
+    data class Error(val mensaje: String) : ResultadoReenvio
+    data object ErrorDeRed : ResultadoReenvio
 }
 
 /** Resultado de subir un informe a /api/informes/. */
@@ -35,14 +53,63 @@ sealed interface ResultadoSubida {
  */
 object NexoApiClient {
 
-    suspend fun registrar(baseUrl: String, email: String, password: String, nombre: String): ResultadoAuth =
+    suspend fun registrar(baseUrl: String, email: String, password: String, nombre: String): ResultadoDesafio =
         withContext(Dispatchers.IO) {
-            autenticar("${baseUrl}api/cuentas/registro/", email, password, nombre)
+            iniciarDesafio("${baseUrl}api/cuentas/registro/") {
+                put("email", email)
+                put("password", password)
+                put("nombre", nombre)
+            }
         }
 
-    suspend fun iniciarSesion(baseUrl: String, email: String, password: String): ResultadoAuth =
+    suspend fun iniciarSesion(baseUrl: String, email: String, password: String): ResultadoDesafio =
         withContext(Dispatchers.IO) {
-            autenticar("${baseUrl}api/cuentas/login/", email, password, nombre = null)
+            iniciarDesafio("${baseUrl}api/cuentas/login/") {
+                put("email", email)
+                put("password", password)
+            }
+        }
+
+    suspend fun verificarCodigo(baseUrl: String, desafio: String, codigo: String): ResultadoVerificacion =
+        withContext(Dispatchers.IO) {
+            try {
+                val cuerpo = JSONObject().apply {
+                    put("desafio", desafio)
+                    put("codigo", codigo)
+                }.toString()
+                val conexion = abrirConexionPost("${baseUrl}api/cuentas/verificar/", cuerpo)
+                if (conexion.responseCode in 200..299) {
+                    val respuesta = JSONObject(conexion.inputStream.bufferedReader().use { it.readText() })
+                    ResultadoVerificacion.Exito(
+                        token = respuesta.getString("token"),
+                        email = respuesta.optString("email", ""),
+                        nombre = respuesta.optString("nombre", "")
+                    )
+                } else {
+                    val cuerpoError = conexion.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                    ResultadoVerificacion.ErrorCodigo(extraerMensajeError(cuerpoError))
+                }
+            } catch (e: IOException) {
+                Log.w(TAG, "verificarCodigo: error de red", e)
+                ResultadoVerificacion.ErrorDeRed
+            }
+        }
+
+    suspend fun reenviarCodigo(baseUrl: String, desafio: String): ResultadoReenvio =
+        withContext(Dispatchers.IO) {
+            try {
+                val cuerpo = JSONObject().apply { put("desafio", desafio) }.toString()
+                val conexion = abrirConexionPost("${baseUrl}api/cuentas/reenviar/", cuerpo)
+                if (conexion.responseCode in 200..299) {
+                    ResultadoReenvio.Exito
+                } else {
+                    val cuerpoError = conexion.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                    ResultadoReenvio.Error(extraerMensajeError(cuerpoError))
+                }
+            } catch (e: IOException) {
+                Log.w(TAG, "reenviarCodigo: error de red", e)
+                ResultadoReenvio.ErrorDeRed
+            }
         }
 
     suspend fun subirInforme(baseUrl: String, token: String, jsonInforme: String): ResultadoSubida =
@@ -64,30 +131,21 @@ object NexoApiClient {
             }
         }
 
-    private fun autenticar(url: String, email: String, password: String, nombre: String?): ResultadoAuth {
+    private fun iniciarDesafio(url: String, construirCuerpo: JSONObject.() -> Unit): ResultadoDesafio {
         return try {
-            val cuerpo = JSONObject().apply {
-                put("email", email)
-                put("password", password)
-                if (nombre != null) put("nombre", nombre)
-            }.toString()
-
+            val cuerpo = JSONObject().apply(construirCuerpo).toString()
             val conexion = abrirConexionPost(url, cuerpo)
             val codigo = conexion.responseCode
             if (codigo in 200..299) {
                 val respuesta = JSONObject(conexion.inputStream.bufferedReader().use { it.readText() })
-                ResultadoAuth.Exito(
-                    token = respuesta.getString("token"),
-                    email = respuesta.optString("email", email),
-                    nombre = respuesta.optString("nombre", "")
-                )
+                ResultadoDesafio.Exito(respuesta.getString("desafio"))
             } else {
                 val cuerpoError = conexion.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
-                ResultadoAuth.ErrorCredenciales(extraerMensajeError(cuerpoError))
+                ResultadoDesafio.ErrorCredenciales(extraerMensajeError(cuerpoError))
             }
         } catch (e: IOException) {
-            Log.w(TAG, "autenticar: error de red", e)
-            ResultadoAuth.ErrorDeRed
+            Log.w(TAG, "iniciarDesafio: error de red", e)
+            ResultadoDesafio.ErrorDeRed
         }
     }
 

@@ -10,7 +10,7 @@ class AppUsoInline(admin.TabularInline):
 
 @admin.register(Informe)
 class InformeAdmin(admin.ModelAdmin):
-    list_display = ["nombre_jornada", "fecha", "dispositivo", "minutos_totales", "actualizado_en"]
+    list_display = ["nombre_jornada", "fecha", "dispositivo", "minutos_totales", "correo_enviado", "actualizado_en"]
     list_filter = ["fecha"]
     search_fields = ["nombre_jornada", "dispositivo__nombre", "dispositivo__apoderado__email"]
     inlines = [AppUsoInline]
