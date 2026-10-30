@@ -43,16 +43,22 @@ fun construirJsonInforme(informe: ReportEntity, dispositivoUuid: String, disposi
     }
 }
 
-/** Escapa [valor] como string JSON — comillas, barras invertidas y los caracteres de control más comunes. */
+/**
+ * Escapa [valor] como string JSON: comillas, barras invertidas, los 3
+ * escapes cortos estándar (\n, \r, \t) y cualquier otro carácter de control
+ * (código < 0x20 — ej. \u0000-\u0008, \u000B, \u000C, \u000E-\u001F) como
+ * \u00XX, que es válido en JSON para cualquiera de ellos.
+ */
 private fun jsonString(valor: String): String {
     val escapado = buildString {
         valor.forEach { caracter ->
-            when (caracter) {
-                '"' -> append("\\\"")
-                '\\' -> append("\\\\")
-                '\n' -> append("\\n")
-                '\r' -> append("\\r")
-                '\t' -> append("\\t")
+            when {
+                caracter == '"' -> append("\\\"")
+                caracter == '\\' -> append("\\\\")
+                caracter == '\n' -> append("\\n")
+                caracter == '\r' -> append("\\r")
+                caracter == '\t' -> append("\\t")
+                caracter.code < 0x20 -> append("\\u%04x".format(caracter.code))
                 else -> append(caracter)
             }
         }

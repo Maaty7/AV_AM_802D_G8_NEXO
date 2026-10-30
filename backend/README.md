@@ -112,6 +112,25 @@ confirma que el teléfono y el computador estén en la misma red, que
 `runserver` esté corriendo con `0.0.0.0:8000`, y que la regla del firewall
 esté creada, antes de probar la vinculación de cuenta desde el teléfono.
 
+### Cambiar la IP que usa la app Android
+
+La IP **no** está escrita en ningún archivo de código ni de recursos del
+proyecto Android — se lee de `Nexo_App/local.properties` (ya en
+`.gitignore`, igual que `sdk.dir`; cada quien tiene el suyo, nunca se sube).
+Para apuntar la build de debug a tu propia IP, agrega o edita esta línea en
+`Nexo_App/local.properties`:
+
+```properties
+nexo.backend.ip=192.168.1.116
+```
+
+Si la clave no existe, Gradle usa `127.0.0.1` por defecto (para que el
+proyecto siga compilando en un checkout nuevo, aunque esa IP no sirva para
+probar desde un teléfono real). Tanto `BuildConfig.BASE_URL` como el
+`network_security_config` de debug (que permite HTTP sin cifrar solo hacia
+esa IP) se generan automáticamente a partir de este valor en cada build —
+no hay que tocar ningún `.xml` ni `build.gradle.kts` a mano.
+
 ## Tests
 
 ```powershell

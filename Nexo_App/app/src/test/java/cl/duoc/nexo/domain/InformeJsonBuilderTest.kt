@@ -80,6 +80,35 @@ class InformeJsonBuilderTest {
         assertFalse(json.contains("\"nombre\":\"Mi \"App\" rara\""))
     }
 
+    // El nombre del dispositivo (no pasa por el códec de appsUsadas, que usa
+    // "\n" como separador de fila) es el campo correcto para probar barras
+    // invertidas y saltos de línea de verdad sin chocar con ese separador.
+
+    @Test
+    fun `construirJsonInforme escapa barras invertidas en el nombre del dispositivo`() {
+        val informe = informeDePrueba(appsUsadas = "")
+        val json = construirJsonInforme(informe, dispositivoUuid = "abc-123", dispositivoNombre = """C:\Apps\Raro""")
+
+        assertTrue(json.contains("\"dispositivo_nombre\":\"C:\\\\Apps\\\\Raro\""))
+    }
+
+    @Test
+    fun `construirJsonInforme escapa un salto de linea real en el nombre del dispositivo`() {
+        val informe = informeDePrueba(appsUsadas = "")
+        val json = construirJsonInforme(informe, dispositivoUuid = "abc-123", dispositivoNombre = "Linea1\nLinea2")
+
+        assertTrue(json.contains("\"dispositivo_nombre\":\"Linea1\\nLinea2\""))
+        assertFalse("no debe quedar un salto de línea real dentro del JSON", json.contains("\n"))
+    }
+
+    @Test
+    fun `construirJsonInforme escapa caracteres de control genericos como u00XX`() {
+        val informe = informeDePrueba(appsUsadas = "")
+        val json = construirJsonInforme(informe, dispositivoUuid = "abc-123", dispositivoNombre = "Raro\u0001Nombre")
+
+        assertTrue(json.contains("\"dispositivo_nombre\":\"Raro\\u0001Nombre\""))
+    }
+
     @Test
     fun `construirJsonInforme produce un JSON balanceado en llaves y corchetes`() {
         val appsUsadas = "Classroom|Educación|60\nWhatsApp|Comunicación|10"

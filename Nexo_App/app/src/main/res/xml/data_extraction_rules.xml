@@ -4,10 +4,13 @@
         <exclude domain="database" path="nexo_database" />
         <exclude domain="database" path="nexo_database-wal" />
         <exclude domain="database" path="nexo_database-shm" />
+        <!-- Token de la cuenta vinculada + UUID del dispositivo (SesionBackendPrefs). -->
+        <exclude domain="sharedpref" path="nexo_backend_prefs.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="database" path="nexo_database" />
         <exclude domain="database" path="nexo_database-wal" />
         <exclude domain="database" path="nexo_database-shm" />
+        <exclude domain="sharedpref" path="nexo_backend_prefs.xml" />
     </device-transfer>
 </data-extraction-rules>

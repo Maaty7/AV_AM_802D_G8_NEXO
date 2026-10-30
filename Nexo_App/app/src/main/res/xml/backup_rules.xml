@@ -8,4 +8,6 @@
     <exclude domain="database" path="nexo_database" />
     <exclude domain="database" path="nexo_database-wal" />
     <exclude domain="database" path="nexo_database-shm" />
+    <!-- Token de la cuenta vinculada + UUID del dispositivo (SesionBackendPrefs). -->
+    <exclude domain="sharedpref" path="nexo_backend_prefs.xml" />
 </full-backup-content>
