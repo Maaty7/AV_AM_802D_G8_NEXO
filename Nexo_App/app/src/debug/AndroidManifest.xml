@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Solo se mezcla con el manifest principal en builds de debug (Android
+    Gradle Plugin fusiona automáticamente src/debug/ sobre src/main/ para esa
+    variante). Habilita el network_security_config que permite HTTP sin
+    cifrar únicamente hacia la IP local del backend de desarrollo.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:networkSecurityConfig="@xml/network_security_config" />
+</manifest>

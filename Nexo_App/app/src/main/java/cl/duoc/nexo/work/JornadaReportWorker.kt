@@ -6,6 +6,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import cl.duoc.nexo.data.local.database.NexoDatabase
 import cl.duoc.nexo.data.local.entities.ReportEntity
+import cl.duoc.nexo.data.local.prefs.SesionBackendPrefs
 import cl.duoc.nexo.domain.abreviacionDia
 import cl.duoc.nexo.domain.calcularFechaObjetivo
 import cl.duoc.nexo.domain.serializarAppsUsadas
@@ -15,7 +16,6 @@ import cl.duoc.nexo.monitoring.UsageStatsRepository
 import cl.duoc.nexo.utils.FeriadosChile
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import java.time.LocalDateTime
 
 private const val TAG = "JornadaReportWorker"
 
@@ -72,27 +72,16 @@ class JornadaReportWorker(
         val fechaObjetivo = calcularFechaObjetivo(jornada.horaTermino)
         val fechaTexto = fechaObjetivo.toString()
 
-        Log.d(
-            DEBUG_TAG,
-            "[Worker] EJECUTANDO ahora=${LocalDateTime.now()} jornada=${jornada.id} fechaObjetivo=$fechaTexto " +
-                "horaInicio=${jornada.horaInicio} horaTermino=${jornada.horaTermino} dias=${jornada.dias} " +
-                "permisoUsageAccess=${UsageAccessPermission.isGranted(applicationContext)}"
-        )
-
         if (!jornada.dias.contains(abreviacionDia(fechaObjetivo.dayOfWeek))) {
-            Log.d(DEBUG_TAG, "[Worker] SALTADO: $fechaTexto no corresponde a la jornada ${jornada.id} (días: ${jornada.dias})")
             return Result.success()
         }
         if (FeriadosChile.esFeriado(fechaTexto)) {
-            Log.d(DEBUG_TAG, "[Worker] SALTADO: $fechaTexto es feriado, jornada ${jornada.id}")
             return Result.success()
         }
         if (db.excepcionJornadaDao().obtenerVigentes(jornada.id, fechaTexto).isNotEmpty()) {
-            Log.d(DEBUG_TAG, "[Worker] SALTADO: $fechaTexto cae en una excepción manual, jornada ${jornada.id}")
             return Result.success()
         }
         if (db.reportDao().contarPorJornadaYFecha(jornada.id, fechaTexto) > 0) {
-            Log.d(DEBUG_TAG, "[Worker] SALTADO: ya existe un informe para la jornada ${jornada.id} en $fechaTexto")
             return Result.success()
         }
         if (!UsageAccessPermission.isGranted(applicationContext)) {
@@ -104,6 +93,7 @@ class JornadaReportWorker(
             applicationContext,
             jornada.horaInicio,
             jornada.horaTermino,
+            jornada.id,
             fechaObjetivo
         )
 
@@ -115,16 +105,10 @@ class JornadaReportWorker(
             is ResultadoConsultaUso.Exito -> resultado.apps
         }
 
-        Log.d(
-            DEBUG_TAG,
-            "[Worker] usos devueltos: apps=${usos.size} minutosTotales=${usos.sumOf { it.totalTimeMinutes }} " +
-                "(0 minutos acá es un informe real de \"sin uso\", no un rango inválido)"
-        )
-
         val porCategoria = usos.groupBy { it.categoria }
             .mapValues { (_, apps) -> apps.sumOf { it.totalTimeMinutes } }
 
-        db.reportDao().insertar(
+        val nuevoId = db.reportDao().insertar(
             ReportEntity(
                 scheduleId = jornada.id,
                 nombreJornada = jornada.nombre,
@@ -143,6 +127,11 @@ class JornadaReportWorker(
                 generadoEn = System.currentTimeMillis()
             )
         )
+
+        // Solo si hay una cuenta vinculada — si no, la app no intenta usar la red.
+        if (SesionBackendPrefs.estaVinculada(applicationContext)) {
+            SubirInformeScheduler.encolar(applicationContext, nuevoId.toInt())
+        }
 
         return Result.success()
     }

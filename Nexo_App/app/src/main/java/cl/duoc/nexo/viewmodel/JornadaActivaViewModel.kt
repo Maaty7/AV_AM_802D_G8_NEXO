@@ -75,7 +75,8 @@ class JornadaActivaViewModel(application: Application) : AndroidViewModel(applic
         val resultado = UsageStatsRepository.obtenerUsoEnRango(
             getApplication(),
             jornada.horaInicio,
-            jornada.horaTermino
+            jornada.horaTermino,
+            jornada.id
         )
         // Rango inválido es un caso raro en vivo (solo pasaría con una jornada
         // mal configurada) — se muestra igual que "sin uso" en el dashboard.
@@ -89,7 +90,8 @@ class JornadaActivaViewModel(application: Application) : AndroidViewModel(applic
             getApplication(),
             jornada.horaInicio,
             jornada.horaTermino,
-            tamanoFranjaMinutos(jornada)
+            tamanoFranjaMinutos(jornada),
+            jornada.id
         )
     }
 

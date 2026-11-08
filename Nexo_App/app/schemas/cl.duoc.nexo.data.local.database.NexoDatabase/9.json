@@ -1,0 +1,331 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 9,
+    "identityHash": "667cc0bde5c6546098f8af2fddda2ecf",
+    "entities": [
+      {
+        "tableName": "parent_settings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `nombreApoderado` TEXT NOT NULL, `correoApoderado` TEXT NOT NULL, `pinHash` TEXT NOT NULL, `temaOscuro` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombreApoderado",
+            "columnName": "nombreApoderado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "correoApoderado",
+            "columnName": "correoApoderado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pinHash",
+            "columnName": "pinHash",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "temaOscuro",
+            "columnName": "temaOscuro",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "schedules",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `horaInicio` TEXT NOT NULL, `horaTermino` TEXT NOT NULL, `dias` TEXT NOT NULL, `activo` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "horaInicio",
+            "columnName": "horaInicio",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "horaTermino",
+            "columnName": "horaTermino",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dias",
+            "columnName": "dias",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activo",
+            "columnName": "activo",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "reports",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `scheduleId` INTEGER NOT NULL, `nombreJornada` TEXT NOT NULL, `fecha` TEXT NOT NULL, `horaInicio` TEXT NOT NULL, `horaTermino` TEXT NOT NULL, `dias` TEXT NOT NULL, `minutosTotales` INTEGER NOT NULL, `minutosEducacion` INTEGER NOT NULL, `minutosComunicacion` INTEGER NOT NULL, `minutosRedesSociales` INTEGER NOT NULL, `minutosEntretenimiento` INTEGER NOT NULL, `minutosJuegos` INTEGER NOT NULL, `minutosOtros` INTEGER NOT NULL, `appsUsadas` TEXT NOT NULL, `minutosPausas` INTEGER NOT NULL, `appsUsadasPausas` TEXT NOT NULL, `generadoEn` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "scheduleId",
+            "columnName": "scheduleId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombreJornada",
+            "columnName": "nombreJornada",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fecha",
+            "columnName": "fecha",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "horaInicio",
+            "columnName": "horaInicio",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "horaTermino",
+            "columnName": "horaTermino",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dias",
+            "columnName": "dias",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minutosTotales",
+            "columnName": "minutosTotales",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minutosEducacion",
+            "columnName": "minutosEducacion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minutosComunicacion",
+            "columnName": "minutosComunicacion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minutosRedesSociales",
+            "columnName": "minutosRedesSociales",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minutosEntretenimiento",
+            "columnName": "minutosEntretenimiento",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minutosJuegos",
+            "columnName": "minutosJuegos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minutosOtros",
+            "columnName": "minutosOtros",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appsUsadas",
+            "columnName": "appsUsadas",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minutosPausas",
+            "columnName": "minutosPausas",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appsUsadasPausas",
+            "columnName": "appsUsadasPausas",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "generadoEn",
+            "columnName": "generadoEn",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "supervised_apps",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`packageName` TEXT NOT NULL, `supervisada` INTEGER NOT NULL, PRIMARY KEY(`packageName`))",
+        "fields": [
+          {
+            "fieldPath": "packageName",
+            "columnName": "packageName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "supervisada",
+            "columnName": "supervisada",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "packageName"
+          ]
+        }
+      },
+      {
+        "tableName": "excepciones_jornada",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `scheduleId` INTEGER NOT NULL, `fechaInicio` TEXT NOT NULL, `fechaTermino` TEXT NOT NULL, `motivo` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "scheduleId",
+            "columnName": "scheduleId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaInicio",
+            "columnName": "fechaInicio",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaTermino",
+            "columnName": "fechaTermino",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "motivo",
+            "columnName": "motivo",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "pausas_jornada",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `scheduleId` INTEGER NOT NULL, `nombre` TEXT NOT NULL, `horaInicio` TEXT NOT NULL, `horaTermino` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "scheduleId",
+            "columnName": "scheduleId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "horaInicio",
+            "columnName": "horaInicio",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "horaTermino",
+            "columnName": "horaTermino",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '667cc0bde5c6546098f8af2fddda2ecf')"
+    ]
+  }
+}

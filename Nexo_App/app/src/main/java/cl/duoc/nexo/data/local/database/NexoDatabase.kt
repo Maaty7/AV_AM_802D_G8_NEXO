@@ -8,11 +8,13 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import cl.duoc.nexo.data.local.dao.ExcepcionJornadaDao
 import cl.duoc.nexo.data.local.dao.ParentSettingsDao
+import cl.duoc.nexo.data.local.dao.PausaJornadaDao
 import cl.duoc.nexo.data.local.dao.ReportDao
 import cl.duoc.nexo.data.local.dao.ScheduleDao
 import cl.duoc.nexo.data.local.dao.SupervisedAppDao
 import cl.duoc.nexo.data.local.entities.ExcepcionJornadaEntity
 import cl.duoc.nexo.data.local.entities.ParentSettingsEntity
+import cl.duoc.nexo.data.local.entities.PausaJornadaEntity
 import cl.duoc.nexo.data.local.entities.ReportEntity
 import cl.duoc.nexo.data.local.entities.ScheduleEntity
 import cl.duoc.nexo.data.local.entities.SupervisedAppEntity
@@ -23,10 +25,11 @@ import cl.duoc.nexo.data.local.entities.SupervisedAppEntity
         ScheduleEntity::class,
         ReportEntity::class,
         SupervisedAppEntity::class,
-        ExcepcionJornadaEntity::class
+        ExcepcionJornadaEntity::class,
+        PausaJornadaEntity::class
     ],
-    version = 8,
-    exportSchema = false
+    version = 9,
+    exportSchema = true
 )
 abstract class NexoDatabase : RoomDatabase() {
 
@@ -35,6 +38,7 @@ abstract class NexoDatabase : RoomDatabase() {
     abstract fun reportDao(): ReportDao
     abstract fun supervisedAppDao(): SupervisedAppDao
     abstract fun excepcionJornadaDao(): ExcepcionJornadaDao
+    abstract fun pausaJornadaDao(): PausaJornadaDao
 
     companion object {
         @Volatile
@@ -103,6 +107,33 @@ abstract class NexoDatabase : RoomDatabase() {
             }
         }
 
+        // La versión 9 agrega las pausas (recreos/descansos) dentro de una
+        // jornada: la tabla nueva, y 2 columnas en reports. El uso durante
+        // las pausas se descarta del cálculo (Worker y dashboard en vivo) y
+        // nunca se guarda, pero las columnas quedan declaradas en
+        // ReportEntity igual (ver su comentario) porque ya corrieron en
+        // instalaciones reales — quitarlas rompería la validación de Room.
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS pausas_jornada (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "scheduleId INTEGER NOT NULL, " +
+                        "nombre TEXT NOT NULL, " +
+                        "horaInicio TEXT NOT NULL, " +
+                        "horaTermino TEXT NOT NULL)"
+                )
+                db.execSQL(
+                    "ALTER TABLE reports ADD COLUMN minutosPausas " +
+                        "INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "ALTER TABLE reports ADD COLUMN appsUsadasPausas " +
+                        "TEXT NOT NULL DEFAULT ''"
+                )
+            }
+        }
+
         fun getInstance(context: Context): NexoDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instancia = Room.databaseBuilder(
@@ -110,7 +141,10 @@ abstract class NexoDatabase : RoomDatabase() {
                     NexoDatabase::class.java,
                     "nexo_database"
                 )
-                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                    .addMigrations(
+                        MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
+                        MIGRATION_8_9
+                    )
                     .build()
                 INSTANCE = instancia
                 instancia

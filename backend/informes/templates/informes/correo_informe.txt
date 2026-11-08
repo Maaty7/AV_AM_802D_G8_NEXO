@@ -1,0 +1,13 @@
+Informe de jornada — {{ informe.nombre_jornada }}
+
+Fecha: {{ informe.fecha }}
+Horario: {{ informe.hora_inicio }} – {{ informe.hora_termino }}
+Tiempo total: {{ informe.minutos_totales }} min
+
+Minutos por categoría:
+{% for nombre, minutos in categorias %}- {{ nombre }}: {{ minutos }} min
+{% endfor %}
+Apps más usadas:
+{% for app in top_apps %}- {{ app.nombre }} ({{ app.minutos }} min)
+{% endfor %}
+— NEXO

@@ -16,4 +16,6 @@ object NexoDestinations {
     const val ACERCA_DE = "acerca_de"
     const val INFORMES = "informes"
     const val EXCEPCIONES = "excepciones"
+    const val PAUSAS_JORNADA = "pausas_jornada"
+    const val VINCULAR_CUENTA = "vincular_cuenta"
 }
