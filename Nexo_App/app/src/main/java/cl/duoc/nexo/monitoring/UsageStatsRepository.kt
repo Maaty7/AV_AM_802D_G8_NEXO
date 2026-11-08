@@ -16,16 +16,10 @@ import cl.duoc.nexo.domain.recortarPorPausas
 import cl.duoc.nexo.domain.resolverRangoPausa
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 
-// TEMPORAL — diagnóstico de informes vacíos, quitar cuando se confirme el arreglo.
 private const val DEBUG_TAG = "NEXO_DEBUG"
-private fun formatearFechaLegible(millis: Long): String =
-    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(millis))
 
 /** Resultado de consultar el uso de una jornada: distingue "sin uso real" de "rango inválido" (nunca se debe guardar un informe por esto último). */
 sealed interface ResultadoConsultaUso {
@@ -61,11 +55,6 @@ object UsageStatsRepository {
                 ResultadoConsultaUso.RangoInvalido
             }
             is RangoJornada.Valido -> {
-                Log.d(
-                    DEBUG_TAG,
-                    "[UsageStatsRepository] obtenerUsoEnRango fechaBase=$fechaBase horaInicio=$horaInicio horaTermino=$horaTermino " +
-                        "-> inicio=${formatearFechaLegible(rango.inicioMillis)} fin=${formatearFechaLegible(rango.finMillis)}"
-                )
                 val pausasMillis = obtenerPausasEnMillis(context, scheduleId, horaInicio, rango.inicioMillis)
                 ResultadoConsultaUso.Exito(consultar(context, rango.inicioMillis, rango.finMillis, pausasMillis))
             }
@@ -141,7 +130,6 @@ object UsageStatsRepository {
         pausasMillis: List<Pair<Long, Long>> = emptyList()
     ): List<AppUsageInfo> {
         val totales = calcularTiemposViaEventos(context, startTime, endTime, pausasMillis)
-        Log.d(DEBUG_TAG, "[UsageStatsRepository] consultar: packages con tiempo>0 antes de filtrar sistema = ${totales.count { it.value > 0 }} de ${totales.size} totales")
         val packageManager = context.packageManager
 
         val resultado = totales.entries
@@ -157,7 +145,6 @@ object UsageStatsRepository {
             }
             .sortedByDescending { it.totalTimeMs }
 
-        Log.d(DEBUG_TAG, "[UsageStatsRepository] consultar: apps finales tras filtro de apps de sistema = ${resultado.size}")
         return resultado
     }
 
@@ -181,11 +168,9 @@ object UsageStatsRepository {
         val tiemposInicio = mutableMapOf<String, Long>()
         val sesiones = mutableListOf<Sesion>()
         val evento = UsageEvents.Event()
-        var eventosLeidos = 0
 
         while (eventos.hasNextEvent()) {
             eventos.getNextEvent(evento)
-            eventosLeidos++
             when (evento.eventType) {
                 UsageEvents.Event.MOVE_TO_FOREGROUND -> {
                     tiemposInicio[evento.packageName] = evento.timeStamp
@@ -207,21 +192,11 @@ object UsageStatsRepository {
             }
         }
 
-        Log.d(
-            DEBUG_TAG,
-            "[UsageStatsRepository] calcularSesiones rango=${formatearFechaLegible(startTime)}..${formatearFechaLegible(endTime)} " +
-                "eventosLeidos=$eventosLeidos sesionesCrudas=${sesiones.size} appsAbiertasSinCerrar=${tiemposInicio.size}"
-        )
-
         val noSupervisadas = NexoDatabase.getInstance(context).supervisedAppDao()
             .obtenerPackagesNoSupervisados()
             .toSet()
 
         val sesionesFiltradas = sesiones.filterNot { it.packageName in noSupervisadas }
-        Log.d(
-            DEBUG_TAG,
-            "[UsageStatsRepository] calcularSesiones appsNoSupervisadas=${noSupervisadas.size} sesionesTrasFiltroSupervision=${sesionesFiltradas.size}"
-        )
 
         return sesionesFiltradas
     }
