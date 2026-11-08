@@ -39,6 +39,14 @@ Proyecto Capstone de Ingeniería en Informática (DuocUC).
 - **Vinculación de cuenta y sincronización**: opcional — si el apoderado
   vincula una cuenta, los informes se suben a un backend propio; si no
   vincula ninguna, la app funciona igual que siempre y nunca usa la red.
+- **Verificación en dos pasos por correo**: al registrarse o iniciar sesión
+  en el backend, se envía un código de 6 dígitos por correo (vence a los 10
+  minutos, máximo 5 intentos) antes de entregar la sesión.
+- **Correo de resumen del informe**: al sincronizar un informe de una
+  jornada reciente (de hoy o de ayer), el apoderado recibe un correo con el
+  resumen (tiempo total, por categoría y apps más usadas); los informes más
+  antiguos no generan correo, para no saturar la bandeja al sincronizar un
+  historial completo.
 
 ## Stack y arquitectura
 
@@ -185,11 +193,13 @@ admite HTTPS.
 
 ## Limitaciones conocidas y trabajo futuro
 
-- Informe por correo (hoy el informe se ve y descarga en PDF, no se envía
-  automáticamente).
-- Verificación en dos pasos para la cuenta del apoderado.
+- El backend corre solo en red local, pensado para desarrollo/pruebas — no
+  hay despliegue en la nube ni HTTPS real.
 - Recuperación de PIN olvidado.
-- Analítica avanzada (tendencias históricas, comparativas entre jornadas).
-- Despliegue del backend en la nube con HTTPS real (hoy corre solo en red
-  local, pensado para desarrollo/pruebas).
-- Modelo Premium.
+- Analítica avanzada: tendencias históricas, índice de cumplimiento,
+  alertas.
+- Modelo Premium: sin cobro implementado todavía.
+- Si el teléfono tiene instalada una versión muy antigua de la app, puede
+  ser necesario reinstalarla (desinstalar y volver a instalar) en vez de
+  solo actualizarla, por cambios de esquema de la base de datos local que
+  quedaron muy atrás.

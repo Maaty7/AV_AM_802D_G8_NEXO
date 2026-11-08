@@ -4,9 +4,12 @@ API en Django + Django REST Framework + PostgreSQL. Recibe los informes de
 jornada que hoy genera la app Android (lo mismo que guarda `ReportEntity.kt`
 en Room), con cuentas de apoderado y autenticación por token.
 
-**Fuera de alcance (a propósito):** correo, verificación en dos pasos,
-recuperación de PIN, analítica, despliegue en la nube. El PIN de la app
-**nunca** se envía al servidor.
+Incluye verificación en dos pasos por correo (código de 6 dígitos) al
+registrarse o iniciar sesión, y un correo de resumen automático cuando se
+sincroniza un informe de jornada reciente.
+
+**Fuera de alcance (a propósito):** recuperación de PIN, analítica,
+despliegue en la nube. El PIN de la app **nunca** se envía al servidor.
 
 ## Requisitos
 
@@ -63,6 +66,19 @@ Variables:
 - `DJANGO_DEBUG` — `True` en desarrollo, `False` en producción.
 - `DJANGO_ALLOWED_HOSTS` — hosts separados por coma.
 - `DATABASE_URL` — `postgres://usuario:contraseña@host:puerto/nombre_db`.
+- `EMAIL_BACKEND` — déjalo como está (`django.core.mail.backends.smtp.EmailBackend`); durante `python manage.py test` Django cambia solo a un backend en memoria, no envía correos reales.
+- `EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_USE_TLS` — para Gmail: `smtp.gmail.com`, `587`, `True`.
+- `EMAIL_HOST_USER` — la cuenta de Gmail que manda los correos del proyecto.
+- `EMAIL_HOST_PASSWORD` — **no es la contraseña normal de esa cuenta de Google.** Es una "contraseña de aplicación" de 16 letras, distinta y generada aparte. Para obtenerla:
+  1. En la cuenta de Google que vas a usar, activa la verificación en dos pasos (si no la tienes ya) en [myaccount.google.com/security](https://myaccount.google.com/security).
+  2. Ve a [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) y genera una contraseña de aplicación nueva.
+  3. Google te muestra un código de 16 letras en grupos de 4 (ej. `abcd efgh ijkl mnop`). Pégalo en `EMAIL_HOST_PASSWORD` **sin los espacios** (ej. `abcdefghijklmnop`).
+- `DEFAULT_FROM_EMAIL` — normalmente la misma dirección que `EMAIL_HOST_USER`.
+
+**Si editas `.env` con `runserver` ya corriendo, reinícialo** — Django solo
+lee el archivo al arrancar, así que un cambio (por ejemplo, recién pegar la
+contraseña de aplicación) no se aplica hasta que detengas el servidor
+(`Ctrl+C`) y lo vuelvas a levantar.
 
 ## Migraciones y servidor
 
@@ -121,7 +137,7 @@ Para apuntar la build de debug a tu propia IP, agrega o edita esta línea en
 `Nexo_App/local.properties`:
 
 ```properties
-nexo.backend.ip=192.168.1.116
+nexo.backend.ip=192.168.1.100
 ```
 
 Si la clave no existe, Gradle usa `127.0.0.1` por defecto (para que el
@@ -144,14 +160,18 @@ por eso el rol `nexo_user` necesita `CREATEDB`.
 
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
-| POST | `/api/cuentas/registro/` | No | `{email, password, nombre}` → crea el apoderado y devuelve `{token, email, nombre}` |
-| POST | `/api/cuentas/login/` | No | `{email, password}` → `{token, email, nombre}` |
+| POST | `/api/cuentas/registro/` | No | `{email, password, nombre}` → crea el apoderado (sin verificar todavía), manda un código de 6 dígitos por correo y devuelve `{desafio}` |
+| POST | `/api/cuentas/login/` | No | `{email, password}` → si las credenciales son correctas, manda un código de 6 dígitos por correo y devuelve `{desafio}` |
+| POST | `/api/cuentas/verificar/` | No | `{desafio, codigo}` → si el código es correcto, vigente (10 min) y no se agotaron los 5 intentos, devuelve recién ahí `{token, email, nombre}` |
+| POST | `/api/cuentas/reenviar/` | No | `{desafio}` → reenvía un código nuevo (máx. 1 vez cada 60 segundos) |
 | POST | `/api/informes/` | Token | Crea o actualiza un informe de jornada (ver abajo) |
 | GET | `/api/informes/` | Token | Informes del apoderado autenticado. Filtro opcional `?fecha=yyyy-mm-dd` |
 
-Todas las rutas con "Auth: Token" requieren el header:
+Ni `registro` ni `login` devuelven un token directamente — el token solo se
+entrega tras verificar el código de `verificar`. Todas las rutas con "Auth:
+Token" requieren el header:
 ```
-Authorization: Token <token recibido en registro o login>
+Authorization: Token <token recibido en verificar>
 ```
 
 ### POST /api/informes/
