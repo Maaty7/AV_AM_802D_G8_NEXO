@@ -122,6 +122,26 @@ hay que abrir el puerto 8000 en el firewall de Windows **solo para redes
 privadas** (comando y detalles en `backend/README.md`), y la red del
 computador debe estar configurada como "Privada", no "Pública".
 
+### Script para retomar el trabajo (`scripts/iniciar-nexo.ps1`)
+
+Después de la primera instalación, para no repetir los pasos anteriores
+cada vez que se vuelve a trabajar en el proyecto, hay un script que deja
+todo listo con un solo comando (desde la raíz del repo):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\iniciar-nexo.ps1
+```
+
+Hace lo siguiente, en orden: revisa que el servicio de PostgreSQL esté
+corriendo (y lo intenta iniciar si no, pidiendo permiso de administrador
+si hace falta); compara la IP local actual contra `nexo.backend.ip` en
+`Nexo_App/local.properties` y `DJANGO_ALLOWED_HOSTS` en `backend/.env`,
+avisando si cambiaron (si cambió la IP del computador, hay que actualizar
+ambos archivos a mano y reinstalar la app con `.\gradlew installDebug`);
+corre `python manage.py migrate`; y levanta `runserver 0.0.0.0:8000` en
+una ventana nueva de PowerShell (si detecta que el puerto 8000 ya está en
+uso, no abre una segunda). El script no contiene contraseñas ni IPs fijas.
+
 ## Cómo correr los tests
 
 **App** (desde `Nexo_App`):
