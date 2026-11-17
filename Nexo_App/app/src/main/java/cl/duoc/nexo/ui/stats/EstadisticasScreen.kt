@@ -3,24 +3,27 @@ package cl.duoc.nexo.ui.stats
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -31,34 +34,50 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.domain.AppUsageInfo
 import cl.duoc.nexo.domain.FranjaUso
-import cl.duoc.nexo.monitoring.UsageAccessPermission
+import cl.duoc.nexo.ui.components.AvisoPermisoUso
+import cl.duoc.nexo.ui.components.BarraAnimada
+import cl.duoc.nexo.ui.components.ContadorAnimado
+import cl.duoc.nexo.ui.components.DatoClave
+import cl.duoc.nexo.ui.components.DonaCategorias
+import cl.duoc.nexo.ui.components.EncabezadoSeccion
+import cl.duoc.nexo.ui.components.GlassCard
+import cl.duoc.nexo.ui.components.IntensidadGradiente
+import cl.duoc.nexo.ui.components.NexoCargando
+import cl.duoc.nexo.ui.components.NexoGradientBackground
+import cl.duoc.nexo.ui.components.entradaEnCascada
+import cl.duoc.nexo.ui.components.rememberProgresoAparicion
 import cl.duoc.nexo.ui.navigation.NexoBottomBar
-import cl.duoc.nexo.ui.theme.NexoAmberBg
-import cl.duoc.nexo.ui.theme.NexoCoral
+import cl.duoc.nexo.ui.theme.LocalNexoTemaOscuro
+import cl.duoc.nexo.ui.theme.NexoContenedorSuave
 import cl.duoc.nexo.ui.theme.NexoDeep
-import cl.duoc.nexo.ui.theme.NexoGreen
-import cl.duoc.nexo.ui.theme.NexoIce
-import cl.duoc.nexo.ui.theme.NexoMute
+import cl.duoc.nexo.ui.theme.NexoNeon
+import cl.duoc.nexo.ui.theme.NexoSky
+import cl.duoc.nexo.ui.theme.NexoTextoSecundario
+import cl.duoc.nexo.ui.theme.colorDeCategoria
 import cl.duoc.nexo.ui.theme.coloresPorCategoria
+import cl.duoc.nexo.ui.theme.esCategoriaNeon
 import cl.duoc.nexo.viewmodel.JornadaActivaViewModel
 
-private val NexoUtilidad = NexoGreen
-private val NexoEntretenimiento = NexoCoral
-private val NexoOtrosColor = NexoMute
+// Utilidad en azul (productivo) y entretenimiento en neón (lo que hay que vigilar).
+private val ColorUtilidad = NexoSky
+private val ColorEntretenimiento = NexoNeon
+private val ColorOtros = NexoSky.copy(alpha = 0.40f)
+
+private val CATEGORIAS_DISTRACCION = setOf("Redes Sociales", "Entretenimiento", "Juegos")
 
 @Composable
 fun EstadisticasScreen(
@@ -84,41 +103,42 @@ fun EstadisticasScreen(
         }
     }
 
-    Scaffold(
-        bottomBar = { NexoBottomBar(navController) }
-    ) { innerPadding ->
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            color = MaterialTheme.colorScheme.background
-        ) {
+    NexoGradientBackground(Modifier.fillMaxSize(), IntensidadGradiente.BAJA) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onBackground,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            bottomBar = { NexoBottomBar(navController) }
+        ) { innerPadding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(innerPadding)
                     .verticalScroll(rememberScrollState())
-                    .padding(top = 32.dp, start = 20.dp, end = 20.dp, bottom = 24.dp)
+                    .statusBarsPadding()
+                    .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 16.dp)
             ) {
-                Text(text = "Estadísticas", fontFamily = FontFamily.Serif, fontSize = 22.sp)
+                Text(text = "Estadísticas", style = MaterialTheme.typography.headlineMedium)
                 Text(
-                    text = if (viewModel.jornadaReferencia != null) {
-                        "Dashboard de actividad — ${viewModel.jornadaReferencia!!.nombre}"
-                    } else {
-                        "Sin jornada configurada"
-                    },
-                    color = NexoMute,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
+                    text = viewModel.jornadaReferencia?.let { "Actividad de la jornada «${it.nombre}»" }
+                        ?: "Sin jornada configurada",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = NexoTextoSecundario,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
                 )
 
                 if (!viewModel.permisoUsoConcedido) {
                     AvisoPermisoUso()
                 } else if (!hayActividad) {
-                    Text(
-                        text = "Aún no hay actividad registrada en esta jornada.",
-                        color = NexoMute,
-                        fontSize = 13.sp
-                    )
+                    GlassCard(Modifier.fillMaxWidth()) {
+                        NexoCargando(Modifier.align(Alignment.CenterHorizontally))
+                        Text(
+                            text = "Aún no hay actividad registrada en esta jornada.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = NexoTextoSecundario,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
                 } else {
                     SeccionResumen(
                         appsUsadas = viewModel.appsUsadas.size,
@@ -126,17 +146,20 @@ fun EstadisticasScreen(
                         appMasUsada = viewModel.appsUsadas.firstOrNull()?.appName ?: "—"
                     )
 
-                    Spacer(modifier = Modifier.height(22.dp))
-                    SeccionUtilidadVsEntretenimiento(viewModel.utilidadVsEntretenimiento())
+                    Spacer(Modifier.height(16.dp))
+                    SeccionDistribucion(categorias, Modifier.entradaEnCascada(2))
 
-                    Spacer(modifier = Modifier.height(22.dp))
-                    SeccionCategorias(categorias, viewModel.appsUsadas)
+                    Spacer(Modifier.height(16.dp))
+                    SeccionUtilidadVsEntretenimiento(viewModel.utilidadVsEntretenimiento(), Modifier.entradaEnCascada(3))
 
-                    Spacer(modifier = Modifier.height(22.dp))
-                    SeccionAppsMasUsadas(viewModel.appsUsadas)
+                    Spacer(Modifier.height(16.dp))
+                    SeccionCategorias(categorias, viewModel.appsUsadas, Modifier.entradaEnCascada(4))
 
-                    Spacer(modifier = Modifier.height(22.dp))
-                    SeccionLineaDeTiempo(viewModel.usoPorFranjas)
+                    Spacer(Modifier.height(16.dp))
+                    SeccionAppsMasUsadas(viewModel.appsUsadas, Modifier.entradaEnCascada(5))
+
+                    Spacer(Modifier.height(16.dp))
+                    SeccionLineaDeTiempo(viewModel.usoPorFranjas, Modifier.entradaEnCascada(5))
                 }
             }
         }
@@ -144,180 +167,147 @@ fun EstadisticasScreen(
 }
 
 @Composable
-private fun AvisoPermisoUso() {
-    val context = LocalContext.current
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(NexoAmberBg, RoundedCornerShape(14.dp))
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Falta el permiso de acceso a datos de uso",
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 13.5.sp
-        )
-        Text(
-            text = "Sin este permiso NEXO no puede medir el uso real del teléfono.",
-            color = NexoMute,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(top = 2.dp, bottom = 12.dp)
-        )
-        Button(
-            onClick = { UsageAccessPermission.openSettings(context) },
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = NexoDeep)
-        ) {
-            Text("Abrir ajustes")
-        }
-    }
-}
-
-@Composable
-private fun TituloSeccion(texto: String) {
-    Text(
-        text = texto,
-        color = NexoMute,
-        fontSize = 12.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom = 10.dp)
-    )
-}
-
-@Composable
 private fun SeccionResumen(appsUsadas: Int, minutosTotales: Long, appMasUsada: String) {
-    Column {
-        TituloSeccion("RESUMEN")
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ResumenCard(valor = "$appsUsadas", etiqueta = "Apps usadas", modifier = Modifier.weight(1f))
-            ResumenCard(valor = "${minutosTotales}m", etiqueta = "Tiempo total", modifier = Modifier.weight(1f))
-            ResumenCard(valor = appMasUsada, etiqueta = "Más usada", modifier = Modifier.weight(1f))
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        GlassCard(Modifier.weight(1f).entradaEnCascada(0), relleno = 16.dp) {
+            ContadorAnimado(appsUsadas.toLong(), estilo = MaterialTheme.typography.headlineSmall)
+            Text("Apps usadas", style = MaterialTheme.typography.bodySmall, color = NexoTextoSecundario)
+        }
+        GlassCard(Modifier.weight(1f).entradaEnCascada(1), relleno = 16.dp) {
+            ContadorAnimado(minutosTotales, sufijo = " min", estilo = MaterialTheme.typography.headlineSmall)
+            Text("Tiempo total", style = MaterialTheme.typography.bodySmall, color = NexoTextoSecundario)
         }
     }
-}
-
-@Composable
-private fun ResumenCard(valor: String, etiqueta: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
-            .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Spacer(Modifier.height(12.dp))
+    GlassCard(Modifier.fillMaxWidth().entradaEnCascada(1), relleno = 16.dp) {
+        Text("Más usada", style = MaterialTheme.typography.bodySmall, color = NexoTextoSecundario)
         Text(
-            text = valor,
-            fontFamily = FontFamily.Serif,
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = appMasUsada,
+            style = MaterialTheme.typography.titleLarge,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        Text(text = etiqueta, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
-private fun SeccionUtilidadVsEntretenimiento(minutos: Triple<Long, Long, Long>) {
+private fun SeccionDistribucion(categorias: Map<String, Long>, modifier: Modifier = Modifier) {
+    val total = categorias.values.sum().coerceAtLeast(1L)
+    val distraccion = CATEGORIAS_DISTRACCION.sumOf { categorias[it] ?: 0L }
+    GlassCard(modifier.fillMaxWidth()) {
+        EncabezadoSeccion("Distribución por categoría")
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            DonaCategorias(categorias, tamano = 132.dp)
+            Spacer(Modifier.width(20.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Distracción", style = MaterialTheme.typography.labelMedium, color = NexoTextoSecundario)
+                DatoClave("${distraccion * 100 / total} %")
+                Spacer(Modifier.height(4.dp))
+                categorias.entries.filter { it.value > 0 }.sortedByDescending { it.value }.take(4).forEach { (nombre, minutos) ->
+                    Leyenda(colorDeCategoria(nombre), nombre, minutos, total, conBorde = esCategoriaNeon(nombre))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SeccionUtilidadVsEntretenimiento(minutos: Triple<Long, Long, Long>, modifier: Modifier = Modifier) {
     val (utilidad, entretenimiento, otros) = minutos
     val total = (utilidad + entretenimiento + otros).coerceAtLeast(1L)
+    val progreso = rememberProgresoAparicion(800)
+    val pista = NexoContenedorSuave
 
-    Column {
-        TituloSeccion("UTILIDAD VS. ENTRETENIMIENTO")
+    GlassCard(modifier.fillMaxWidth()) {
+        EncabezadoSeccion("Utilidad vs. entretenimiento")
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(14.dp)
-                .background(NexoIce, RoundedCornerShape(7.dp))
+                .clip(CircleShape)
+                .drawBehind { drawRect(pista) }
         ) {
-            BarraSegmento(utilidad, total, NexoUtilidad, esPrimero = true)
-            BarraSegmento(entretenimiento, total, NexoEntretenimiento)
-            BarraSegmento(otros, total, NexoOtrosColor, esUltimo = true)
+            val p = progreso.value
+            val fu = utilidad.toFloat() / total * p
+            val fe = entretenimiento.toFloat() / total * p
+            val fo = otros.toFloat() / total * p
+            BarraSegmento(fu, ColorUtilidad)
+            BarraSegmento(fe, ColorEntretenimiento)
+            BarraSegmento(fo, ColorOtros)
+            val resto = 1f - (fu + fe + fo)
+            if (resto > 0.001f) Spacer(Modifier.weight(resto))
         }
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Leyenda(NexoUtilidad, "Utilidad", utilidad, total)
-            Leyenda(NexoEntretenimiento, "Entreten.", entretenimiento, total)
-            Leyenda(NexoOtrosColor, "Otros", otros, total)
+            Leyenda(ColorUtilidad, "Utilidad", utilidad, total)
+            Leyenda(ColorEntretenimiento, "Entreten.", entretenimiento, total, conBorde = true)
+            Leyenda(ColorOtros, "Otros", otros, total)
         }
     }
 }
 
 @Composable
-private fun RowScope.BarraSegmento(
-    valor: Long,
-    total: Long,
-    color: Color,
-    esPrimero: Boolean = false,
-    esUltimo: Boolean = false
-) {
-    if (valor <= 0L) return
-    val forma = RoundedCornerShape(
-        topStart = if (esPrimero) 7.dp else 0.dp,
-        bottomStart = if (esPrimero) 7.dp else 0.dp,
-        topEnd = if (esUltimo) 7.dp else 0.dp,
-        bottomEnd = if (esUltimo) 7.dp else 0.dp
-    )
-    Row(
+private fun RowScope.BarraSegmento(fraccion: Float, color: Color) {
+    if (fraccion <= 0.001f) return
+    Box(
         modifier = Modifier
-            .fillMaxWidth(valor.toFloat() / total)
-            .fillMaxSize()
-            .background(color, forma)
-    ) {}
+            .weight(fraccion)
+            .fillMaxHeight()
+            .background(color)
+    )
 }
 
 @Composable
-private fun Leyenda(color: Color, etiqueta: String, valor: Long, total: Long) {
+private fun Leyenda(color: Color, etiqueta: String, valor: Long, total: Long, conBorde: Boolean = false) {
     val porcentaje = (valor * 100 / total).toInt()
+    val borde = if (conBorde && !LocalNexoTemaOscuro.current) NexoDeep.copy(alpha = 0.20f) else Color.Transparent
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Row(
+        Box(
             modifier = Modifier
-                .height(8.dp)
-                .width(8.dp)
+                .size(10.dp)
+                .background(borde, RoundedCornerShape(3.dp))
+                .padding(1.dp)
                 .background(color, RoundedCornerShape(2.dp))
-        ) {}
+        )
         Spacer(modifier = Modifier.width(6.dp))
-        Text(text = "$etiqueta $porcentaje%", fontSize = 11.sp, color = NexoMute)
+        Text(
+            text = "$etiqueta $porcentaje %",
+            style = MaterialTheme.typography.bodySmall,
+            color = NexoTextoSecundario,
+            maxLines = 1
+        )
     }
 }
 
 @Composable
-private fun SeccionCategorias(categorias: Map<String, Long>, apps: List<AppUsageInfo>) {
+private fun SeccionCategorias(categorias: Map<String, Long>, apps: List<AppUsageInfo>, modifier: Modifier = Modifier) {
     val maxMinutos = (categorias.values.maxOrNull() ?: 0L).coerceAtLeast(1L)
     var categoriaSeleccionada by remember { mutableStateOf<String?>(null) }
 
-    Column {
-        TituloSeccion("DISTRIBUCIÓN POR CATEGORÍA")
-        categorias.entries.sortedByDescending { it.value }.forEach { (nombre, minutos) ->
+    GlassCard(modifier.fillMaxWidth()) {
+        EncabezadoSeccion("Minutos por categoría")
+        categorias.entries.sortedByDescending { it.value }.forEachIndexed { i, (nombre, minutos) ->
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { categoriaSeleccionada = nombre }
-                    .padding(bottom = 16.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(role = Role.Button, onClickLabel = "Ver apps de $nombre") { categoriaSeleccionada = nombre }
+                    .padding(vertical = 8.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = nombre, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
-                    Text(text = "$minutos min", fontSize = 12.5.sp)
+                    Text(text = nombre, style = MaterialTheme.typography.titleSmall)
+                    Text(text = "$minutos min", style = MaterialTheme.typography.bodySmall, color = NexoTextoSecundario)
                 }
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(9.dp)
-                        .background(NexoIce, RoundedCornerShape(5.dp))
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(minutos.toFloat() / maxMinutos)
-                            .fillMaxSize()
-                            .background(
-                                coloresPorCategoria[nombre] ?: NexoMute,
-                                RoundedCornerShape(5.dp)
-                            )
-                    ) {}
-                }
+                Spacer(modifier = Modifier.height(8.dp))
+                BarraAnimada(
+                    fraccion = minutos.toFloat() / maxMinutos,
+                    color = colorDeCategoria(nombre),
+                    bordeNeon = esCategoriaNeon(nombre),
+                    retrasoMs = i * 50
+                )
             }
         }
     }
@@ -335,27 +325,31 @@ private fun SeccionCategorias(categorias: Map<String, Long>, apps: List<AppUsage
 private fun DetalleCategoriaDialog(categoria: String, apps: List<AppUsageInfo>, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(categoria) },
+        title = { Text(categoria, style = MaterialTheme.typography.titleLarge) },
         text = {
             if (apps.isEmpty()) {
-                Text("Sin apps registradas en esta categoría.", fontSize = 13.sp, color = NexoMute)
+                Text("Sin apps registradas en esta categoría.", style = MaterialTheme.typography.bodyMedium, color = NexoTextoSecundario)
             } else {
                 Column {
                     apps.forEach { app ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 5.dp),
+                                .padding(vertical = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
                                 text = app.appName,
-                                fontSize = 13.sp,
+                                style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.weight(1f, fill = false),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            Text(text = "${app.totalTimeMinutes} min", fontSize = 12.5.sp, color = NexoMute)
+                            Text(
+                                text = "${app.totalTimeMinutes} min",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = NexoTextoSecundario
+                            )
                         }
                     }
                 }
@@ -370,99 +364,93 @@ private fun DetalleCategoriaDialog(categoria: String, apps: List<AppUsageInfo>, 
 }
 
 @Composable
-private fun SeccionAppsMasUsadas(apps: List<AppUsageInfo>) {
+private fun SeccionAppsMasUsadas(apps: List<AppUsageInfo>, modifier: Modifier = Modifier) {
     val top = apps.take(5)
     val maxMinutos = (top.maxOfOrNull { it.totalTimeMinutes } ?: 0L).coerceAtLeast(1L)
 
-    Column {
-        TituloSeccion("APPS MÁS USADAS")
-        top.forEach { app ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = app.appName,
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
-                        )
-                        Text(text = "${app.totalTimeMinutes} min", fontSize = 11.5.sp, color = NexoMute)
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(7.dp)
-                            .background(NexoIce, RoundedCornerShape(4.dp))
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth(app.totalTimeMinutes.toFloat() / maxMinutos)
-                                .fillMaxSize()
-                                .background(
-                                    coloresPorCategoria[app.categoria] ?: NexoMute,
-                                    RoundedCornerShape(4.dp)
-                                )
-                        ) {}
-                    }
+    GlassCard(modifier.fillMaxWidth()) {
+        EncabezadoSeccion("Apps más usadas")
+        top.forEachIndexed { i, app ->
+            Column(modifier = Modifier.padding(bottom = 12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = app.appName,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Text(text = "${app.totalTimeMinutes} min", style = MaterialTheme.typography.bodySmall, color = NexoTextoSecundario)
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                BarraAnimada(
+                    fraccion = app.totalTimeMinutes.toFloat() / maxMinutos,
+                    color = colorDeCategoria(app.categoria),
+                    alto = 8.dp,
+                    bordeNeon = esCategoriaNeon(app.categoria),
+                    retrasoMs = i * 50
+                )
             }
         }
     }
 }
 
 @Composable
-private fun SeccionLineaDeTiempo(franjas: List<FranjaUso>) {
+private fun SeccionLineaDeTiempo(franjas: List<FranjaUso>, modifier: Modifier = Modifier) {
     if (franjas.isEmpty()) return
     val maxMinutos = (franjas.maxOfOrNull { it.minutos } ?: 0L).coerceAtLeast(1L)
     // Muestra la etiqueta de hora cada cierto número de barras para que no se amontonen.
     val pasoEtiquetas = (franjas.size / 6).coerceAtLeast(1)
+    val progreso = rememberProgresoAparicion(800)
+    val pista = NexoContenedorSuave
+    val colorBarra = MaterialTheme.colorScheme.primary
 
-    Column {
-        TituloSeccion("USO A LO LARGO DE LA JORNADA")
+    GlassCard(modifier.fillMaxWidth()) {
+        EncabezadoSeccion("Uso a lo largo de la jornada")
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(70.dp),
+                .height(80.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.Bottom
         ) {
             franjas.forEach { franja ->
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height((franja.minutos.toFloat() / maxMinutos * 52).dp.coerceAtLeast(2.dp))
-                            .background(
-                                if (franja.minutos > 0) NexoDeep else NexoIce,
-                                RoundedCornerShape(3.dp)
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .drawBehind {
+                            val fraccion = (franja.minutos.toFloat() / maxMinutos) * progreso.value
+                            val alto = (size.height * fraccion).coerceAtLeast(3.dp.toPx())
+                            drawRoundRect(
+                                brush = if (franja.minutos > 0) {
+                                    Brush.verticalGradient(
+                                        listOf(NexoSky, colorBarra),
+                                        startY = size.height - alto,
+                                        endY = size.height
+                                    )
+                                } else Brush.verticalGradient(listOf(pista, pista)),
+                                topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - alto),
+                                size = androidx.compose.ui.geometry.Size(size.width, alto),
+                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(3.dp.toPx())
                             )
-                    ) {}
-                }
+                        }
+                )
             }
         }
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             franjas.forEachIndexed { indice, franja ->
                 Text(
                     text = if (indice % pasoEtiquetas == 0) franja.etiqueta else "",
-                    fontSize = 8.5.sp,
-                    color = NexoMute,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = NexoTextoSecundario,
                     modifier = Modifier.weight(1f),
-                    maxLines = 1
+                    maxLines = 1,
+                    softWrap = false
                 )
             }
         }

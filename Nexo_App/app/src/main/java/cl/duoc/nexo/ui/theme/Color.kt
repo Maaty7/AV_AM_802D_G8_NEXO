@@ -2,20 +2,34 @@ package cl.duoc.nexo.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Paleta oficial NEXO (extraída del mockup del equipo)
-val NexoDeep = Color(0xFF065A82)      // Azul profundo — botones, acentos
-val NexoTeal = Color(0xFF1C7293)      // Teal — hover, secundario
-val NexoMidnight = Color(0xFF17203E)  // Medianoche — fondo splash
-val NexoMidnightVariant = Color(0xFF263759) // Variante de medianoche — fondo de inputs/cards en tema oscuro
-val NexoIce = Color(0xFFEAF2F6)       // Hielo — fondo de inputs/cards
-val NexoCoral = Color(0xFFF96167)     // Coral — errores
-val NexoInk = Color(0xFF1B2430)       // Tinta — texto principal
-val NexoMute = Color(0xFF6C7A89)      // Mute — texto secundario
-val NexoGreen = Color(0xFF2C8C5A)     // Verde — éxito/activo
-val NexoBorder = Color(0xFFDBE6EE)    // Borde sutil de inputs
-val NexoViolet = Color(0xFF7C5CBF)    // Violeta — categoría Redes Sociales
-val NexoAmber = Color(0xFFB45309)     // Ámbar — categoría Juegos / badge "Pendiente"
-val NexoAmberBg = Color(0xFFFDE3D3)   // Fondo claro del badge "Pendiente" en Permisos
-val NexoDotOutline = Color(0xFFC3D2DE) // Borde de los puntos del PIN sin rellenar
-val NexoKeypadBorder = Color(0xFFE1E9EF) // Borde de las teclas circulares del teclado de PIN
-val NexoChevron = Color(0xFFC2CCD4)   // Flecha "›" de las filas de Configuración
+// ─────────────────────────────────────────────────────────────────────────
+// Paleta NEXO v2 — celeste cielo + azul profundo + amarillo neón.
+// Fuente única de verdad: ningún otro archivo debe declarar Color(0x…).
+// Cualquier otro tono = uno de estos con .copy(alpha = …).
+// Ver DESIGN.md para proporciones y reglas de contraste.
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Celeste cielo — marca luminosa: gradientes, gráficos, íconos, estados activos. Nunca texto pequeño sobre blanco. */
+val NexoSky = Color(0xFF38BDF8)
+
+/** Azul profundo — marca seria: texto, encabezados, barras, fondos del tema oscuro. */
+val NexoDeep = Color(0xFF0B2D6B)
+
+/** Amarillo neón — SOLO para destacar (CTA, tab activo, badges, dato clave). Nunca texto sobre fondo claro. */
+val NexoNeon = Color(0xFFE4FF3A)
+
+/** Blanco frío — fondos y superficies del tema claro. */
+val NexoMist = Color(0xFFF5FAFF)
+
+// Tonos derivados permitidos (no agregar otros)
+/** Fondo del tema oscuro (azul casi negro). */
+val NexoNight = Color(0xFF061A3F)
+
+/** Capa más profunda del tema oscuro. */
+val NexoAbyss = Color(0xFF030E26)
+
+/** Contenedores suaves y chips. */
+val NexoSkySoft = Color(0xFFBFE8FC)
+
+/** Neón en estado presionado / categoría Juegos. */
+val NexoNeonDim = Color(0xFFB8D400)

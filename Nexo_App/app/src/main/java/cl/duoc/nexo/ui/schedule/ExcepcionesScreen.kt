@@ -49,14 +49,16 @@ import androidx.navigation.NavHostController
 import cl.duoc.nexo.data.local.entities.ExcepcionJornadaEntity
 import cl.duoc.nexo.ui.navigation.PantallaConVolver
 import cl.duoc.nexo.ui.security.VerificarPinDialog
-import cl.duoc.nexo.ui.theme.NexoCoral
-import cl.duoc.nexo.ui.theme.NexoDeep
-import cl.duoc.nexo.ui.theme.NexoMute
+import cl.duoc.nexo.ui.theme.NexoTextoError
+import cl.duoc.nexo.ui.theme.NexoAcento
+import cl.duoc.nexo.ui.theme.NexoTextoSecundario
 import cl.duoc.nexo.viewmodel.ExcepcionesJornadaViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import cl.duoc.nexo.ui.theme.nexoBotonPrincipalColors
+import cl.duoc.nexo.ui.theme.NexoFuenteTitulos
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,7 +84,7 @@ fun ExcepcionesScreen(
             ) {
                 Text(
                     text = "Vacaciones, paros u otros días en que NO corresponde generar informe, aunque coincida con el horario de una jornada.",
-                    color = NexoMute,
+                    color = NexoTextoSecundario,
                     fontSize = 12.5.sp,
                     lineHeight = 18.sp,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -91,7 +93,7 @@ fun ExcepcionesScreen(
                 viewModel.errorGuardado?.let { mensaje ->
                     Text(
                         text = mensaje,
-                        color = NexoCoral,
+                        color = NexoTextoError,
                         fontSize = 12.5.sp,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
@@ -100,7 +102,7 @@ fun ExcepcionesScreen(
                 if (viewModel.excepciones.isEmpty()) {
                     Text(
                         text = "Aún no tienes excepciones configuradas.",
-                        color = NexoMute,
+                        color = NexoTextoSecundario,
                         fontSize = 13.sp,
                         modifier = Modifier
                             .weight(1f)
@@ -150,7 +152,7 @@ fun ExcepcionesScreen(
                         .fillMaxWidth()
                         .padding(vertical = 16.dp)
                 ) {
-                    Text("+ Agregar excepción", color = NexoDeep, fontWeight = FontWeight.Bold)
+                    Text("+ Agregar excepción", color = NexoAcento, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -167,7 +169,7 @@ fun ExcepcionesScreen(
             sheetState = sheetState
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
-                Text(text = "Nueva excepción", fontFamily = FontFamily.Serif, fontSize = 18.sp)
+                Text(text = "Nueva excepción", fontFamily = NexoFuenteTitulos, fontSize = 18.sp)
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
@@ -219,7 +221,7 @@ fun ExcepcionesScreen(
                                 mostrarModal = false
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = NexoDeep),
+                        colors = nexoBotonPrincipalColors(),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Guardar")
@@ -243,7 +245,7 @@ fun ExcepcionesScreen(
                         excepcionAEliminar = null
                     }
                 ) {
-                    Text("Eliminar", color = NexoCoral)
+                    Text("Eliminar", color = NexoTextoError)
                 }
             },
             dismissButton = {
@@ -281,7 +283,7 @@ private fun SelectorDeFecha(
             text = etiqueta,
             fontSize = 11.5.sp,
             fontWeight = FontWeight.SemiBold,
-            color = NexoMute,
+            color = NexoTextoSecundario,
             modifier = Modifier.padding(bottom = 6.dp)
         )
         Row(

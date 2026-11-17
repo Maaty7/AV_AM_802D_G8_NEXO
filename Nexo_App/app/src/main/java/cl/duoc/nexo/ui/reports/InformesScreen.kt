@@ -1,5 +1,15 @@
 package cl.duoc.nexo.ui.reports
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import cl.duoc.nexo.ui.components.MensajeError
+import cl.duoc.nexo.ui.theme.NexoBorde
+import cl.duoc.nexo.ui.theme.colorDeCategoria
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -44,8 +54,8 @@ import androidx.navigation.NavHostController
 import cl.duoc.nexo.data.local.entities.ReportEntity
 import cl.duoc.nexo.pdf.InformePdfGenerator
 import cl.duoc.nexo.ui.navigation.PantallaConVolver
-import cl.duoc.nexo.ui.theme.NexoCoral
-import cl.duoc.nexo.ui.theme.NexoMute
+import cl.duoc.nexo.ui.theme.NexoTextoError
+import cl.duoc.nexo.ui.theme.NexoTextoSecundario
 import cl.duoc.nexo.viewmodel.InformesViewModel
 
 private const val TAG = "InformesScreen"
@@ -94,7 +104,7 @@ fun InformesScreen(
                 Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
                     Text(
                         text = "Aún no hay informes generados. Se crean automáticamente al terminar cada jornada.",
-                        color = NexoMute,
+                        color = NexoTextoSecundario,
                         fontSize = 13.sp
                     )
                 }
@@ -105,12 +115,7 @@ fun InformesScreen(
                         .padding(horizontal = 20.dp, vertical = 16.dp)
                 ) {
                     errorPdf?.let { mensaje ->
-                        Text(
-                            text = mensaje,
-                            color = NexoCoral,
-                            fontSize = 12.5.sp,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
+                        MensajeError(mensaje, Modifier.padding(bottom = 12.dp))
                     }
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(viewModel.informes) { informe ->
@@ -118,9 +123,11 @@ fun InformesScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 10.dp)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                    .border(1.dp, NexoBorde, RoundedCornerShape(20.dp))
                                     .clickable { informeSeleccionado = informe }
-                                    .padding(14.dp)
+                                    .padding(16.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -212,7 +219,7 @@ private fun DetalleInformeDialog(informe: ReportEntity, onDismiss: () -> Unit) {
                 Text(
                     text = "${informe.fecha} · ${informe.horaInicio}–${informe.horaTermino}",
                     fontSize = 12.5.sp,
-                    color = NexoMute,
+                    color = NexoTextoSecundario,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
                 FilaCategoria("Educación", informe.minutosEducacion)
@@ -239,7 +246,15 @@ private fun FilaCategoria(nombre: String, minutos: Long) {
             .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = nombre, fontSize = 13.sp)
-        Text(text = "$minutos min", fontSize = 12.5.sp, color = NexoMute)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .size(10.dp)
+                    .background(colorDeCategoria(nombre), CircleShape)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(text = nombre, fontSize = 13.sp)
+        }
+        Text(text = "$minutos min", fontSize = 12.5.sp, color = NexoTextoSecundario)
     }
 }

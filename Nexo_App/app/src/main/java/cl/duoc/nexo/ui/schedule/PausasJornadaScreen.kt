@@ -51,11 +51,13 @@ import androidx.navigation.NavHostController
 import cl.duoc.nexo.data.local.entities.PausaJornadaEntity
 import cl.duoc.nexo.ui.navigation.PantallaConVolver
 import cl.duoc.nexo.ui.security.VerificarPinDialog
-import cl.duoc.nexo.ui.theme.NexoBorder
-import cl.duoc.nexo.ui.theme.NexoCoral
-import cl.duoc.nexo.ui.theme.NexoDeep
-import cl.duoc.nexo.ui.theme.NexoMute
+import cl.duoc.nexo.ui.theme.NexoBorde
+import cl.duoc.nexo.ui.theme.NexoTextoError
+import cl.duoc.nexo.ui.theme.NexoAcento
+import cl.duoc.nexo.ui.theme.NexoTextoSecundario
 import cl.duoc.nexo.viewmodel.PausasJornadaViewModel
+import cl.duoc.nexo.ui.theme.nexoBotonPrincipalColors
+import cl.duoc.nexo.ui.theme.NexoFuenteTitulos
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,7 +88,7 @@ fun PausasJornadaScreen(
             ) {
                 Text(
                     text = "El uso de apps durante estos tramos no se cuenta en el tiempo total de la jornada.",
-                    color = NexoMute,
+                    color = NexoTextoSecundario,
                     fontSize = 12.5.sp,
                     lineHeight = 18.sp,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -95,7 +97,7 @@ fun PausasJornadaScreen(
                 viewModel.errorGuardado?.let { mensaje ->
                     Text(
                         text = mensaje,
-                        color = NexoCoral,
+                        color = NexoTextoError,
                         fontSize = 12.5.sp,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
@@ -104,7 +106,7 @@ fun PausasJornadaScreen(
                 if (viewModel.pausas.isEmpty()) {
                     Text(
                         text = "Aún no tienes recreos ni descansos configurados para esta jornada.",
-                        color = NexoMute,
+                        color = NexoTextoSecundario,
                         fontSize = 13.sp,
                         modifier = Modifier
                             .weight(1f)
@@ -154,7 +156,7 @@ fun PausasJornadaScreen(
                         .fillMaxWidth()
                         .padding(vertical = 16.dp)
                 ) {
-                    Text("+ Agregar pausa", color = NexoDeep, fontWeight = FontWeight.Bold)
+                    Text("+ Agregar pausa", color = NexoAcento, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -171,7 +173,7 @@ fun PausasJornadaScreen(
             sheetState = sheetState
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
-                Text(text = "Nueva pausa", fontFamily = FontFamily.Serif, fontSize = 18.sp)
+                Text(text = "Nueva pausa", fontFamily = NexoFuenteTitulos, fontSize = 18.sp)
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
@@ -221,7 +223,7 @@ fun PausasJornadaScreen(
                             accionPendiente = { viewModel.agregar(nombreFinal, horaInicioFinal, horaTerminoFinal) }
                             mostrarModal = false
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = NexoDeep),
+                        colors = nexoBotonPrincipalColors(),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Guardar")
@@ -245,7 +247,7 @@ fun PausasJornadaScreen(
                         pausaAEliminar = null
                     }
                 ) {
-                    Text("Eliminar", color = NexoCoral)
+                    Text("Eliminar", color = NexoTextoError)
                 }
             },
             dismissButton = {
@@ -283,14 +285,14 @@ private fun SelectorDeHoraPausa(
             text = etiqueta,
             fontSize = 11.5.sp,
             fontWeight = FontWeight.SemiBold,
-            color = NexoMute,
+            color = NexoTextoSecundario,
             modifier = Modifier.padding(bottom = 6.dp)
         )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
-                .border(1.dp, NexoBorder, RoundedCornerShape(10.dp))
+                .border(1.dp, NexoBorde, RoundedCornerShape(10.dp))
                 .clickable { mostrarDialogo = true }
                 .padding(horizontal = 14.dp, vertical = 14.dp)
         ) {

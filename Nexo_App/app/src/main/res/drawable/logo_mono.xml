@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generado por design/README: logotipo NEXO (candado). No editar a mano: regenerar desde design/logo/*.svg -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="48dp" android:height="48dp"
+    android:viewportWidth="100" android:viewportHeight="100">
+    <group android:name="marca" android:scaleX="1.0" android:scaleY="1.0" android:translateX="0.0" android:translateY="0.0">
+    <path android:name="traza" android:pathData="M71.5,34 H80 L85,29 H92" android:strokeColor="#FFFFFFFF" android:strokeWidth="3.0" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:name="traza" android:pathData="M71.5,40 H92" android:strokeColor="#FFFFFFFF" android:strokeWidth="3.0" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:name="via" android:fillColor="#FFFFFFFF" android:pathData="M91.9,29 A2.6,2.6 0 1 0 97.1,29 A2.6,2.6 0 1 0 91.9,29 Z"/>
+    <path android:name="via" android:fillColor="#FFFFFFFF" android:pathData="M91.9,40 A2.6,2.6 0 1 0 97.1,40 A2.6,2.6 0 1 0 91.9,40 Z"/>
+    <path android:name="arco" android:pathData="M33,47 V31 A17,17 0 0 1 67,31 V47" android:strokeColor="#FFFFFFFF" android:strokeWidth="9.0" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:name="cuerpo" android:fillType="evenOdd" android:fillColor="#FFFFFFFF" android:pathData="M33,44 H67 A13,13 0 0 1 80,57 V77 A13,13 0 0 1 67,90 H33 A13,13 0 0 1 20,77 V57 A13,13 0 0 1 33,44 Z M50,56 A6,6 0 0 1 53,67.2 L54,76 H46 L47,67.2 A6,6 0 0 1 50,56 Z"/>
+    <path android:name="nodo" android:fillColor="#FFFFFFFF" android:pathData="M62.4,37 A4.6,4.6 0 1 0 71.6,37 A4.6,4.6 0 1 0 62.4,37 Z"/>
+    </group>
+</vector>

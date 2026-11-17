@@ -2,10 +2,17 @@ package cl.duoc.nexo.ui.security
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
+import cl.duoc.nexo.ui.components.rememberAnimacionesActivas
 import cl.duoc.nexo.viewmodel.PinViewModel
+import kotlinx.coroutines.delay
 
 /**
  * Overlay de pantalla completa que exige el PIN antes de dejar pasar una
@@ -20,21 +27,32 @@ fun VerificarPinDialog(
     onCancelar: () -> Unit,
     viewModel: PinViewModel = viewModel()
 ) {
+    val animar = rememberAnimacionesActivas()
+    var desbloqueado by remember { mutableStateOf(false) }
+    val alTerminar by rememberUpdatedState(onVerificado)
+
     LaunchedEffect(Unit) {
         viewModel.iniciarVerificacionAcceso()
+    }
+    LaunchedEffect(desbloqueado) {
+        if (desbloqueado) {
+            if (animar) delay(MS_ANIMACION_DESBLOQUEO)
+            alTerminar()
+        }
     }
 
     Dialog(
         onDismissRequest = onCancelar,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
     ) {
         PinPad(
             titulo = viewModel.titulo,
             subtitulo = viewModel.subtitulo,
             buffer = viewModel.buffer,
             error = viewModel.error,
+            desbloqueado = desbloqueado,
             onDigit = { digit ->
-                viewModel.onDigitPressVerificarAcceso(digit = digit, onCorrecto = onVerificado)
+                viewModel.onDigitPressVerificarAcceso(digit = digit, onCorrecto = { desbloqueado = true })
             },
             onBackspace = { viewModel.onBackspace() }
         )

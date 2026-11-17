@@ -19,7 +19,7 @@ fun CambiarPinScreen(
         viewModel.iniciarCambioPin()
     }
 
-    PantallaConVolver(titulo = "Cambiar PIN", navController = navController) { innerPadding ->
+    PantallaConVolver(titulo = "Cambiar PIN", navController = navController, sobreFondoOscuro = true) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             PinPad(
                 titulo = viewModel.titulo,
@@ -32,7 +32,8 @@ fun CambiarPinScreen(
                         onGuardado = { navController.popBackStack() }
                     )
                 },
-                onBackspace = { viewModel.onBackspace() }
+                onBackspace = { viewModel.onBackspace() },
+                aplicarInsets = false
             )
         }
     }

@@ -34,11 +34,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.ui.navigation.PantallaConVolver
 import cl.duoc.nexo.ui.security.VerificarPinDialog
-import cl.duoc.nexo.ui.theme.NexoCoral
-import cl.duoc.nexo.ui.theme.NexoDeep
-import cl.duoc.nexo.ui.theme.NexoGreen
-import cl.duoc.nexo.ui.theme.NexoMute
+import cl.duoc.nexo.ui.theme.NexoTextoError
+import cl.duoc.nexo.ui.theme.NexoTextoExito
+import cl.duoc.nexo.ui.theme.NexoTextoSecundario
 import cl.duoc.nexo.viewmodel.VincularCuentaViewModel
+import cl.duoc.nexo.ui.theme.nexoBotonPrincipalColors
 
 @Composable
 fun VincularCuentaScreen(
@@ -61,7 +61,7 @@ fun VincularCuentaScreen(
             ) {
                 Text(
                     text = "Sincroniza los informes de jornada con tu cuenta — útil si usas NEXO en más de un teléfono o quieres respaldar los informes fuera del dispositivo.",
-                    color = NexoMute,
+                    color = NexoTextoSecundario,
                     fontSize = 12.5.sp,
                     lineHeight = 18.sp,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -70,7 +70,7 @@ fun VincularCuentaScreen(
                 viewModel.error?.let { mensaje ->
                     Text(
                         text = mensaje,
-                        color = NexoCoral,
+                        color = NexoTextoError,
                         fontSize = 12.5.sp,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
@@ -78,7 +78,7 @@ fun VincularCuentaScreen(
                 viewModel.mensajeSincronizacion?.let { mensaje ->
                     Text(
                         text = mensaje,
-                        color = NexoGreen,
+                        color = NexoTextoExito,
                         fontSize = 12.5.sp,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
@@ -86,7 +86,7 @@ fun VincularCuentaScreen(
                 viewModel.mensajeCodigo?.let { mensaje ->
                     Text(
                         text = mensaje,
-                        color = NexoGreen,
+                        color = NexoTextoExito,
                         fontSize = 12.5.sp,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
@@ -148,7 +148,7 @@ private fun SeccionVinculada(
         onClick = onSincronizar,
         enabled = !cargando,
         shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = NexoDeep),
+        colors = nexoBotonPrincipalColors(),
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(if (cargando) "Sincronizando…" else "Sincronizar ahora")
@@ -159,7 +159,7 @@ private fun SeccionVinculada(
     OutlinedButton(
         onClick = onDesvincular,
         enabled = !cargando,
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = NexoCoral),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = NexoTextoError),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -201,7 +201,7 @@ private fun SeccionVerificarCodigo(
         onClick = { onVerificar(codigo) },
         enabled = !cargando && codigo.length == 6,
         shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = NexoDeep),
+        colors = nexoBotonPrincipalColors(),
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(if (cargando) "Verificando…" else "Verificar")
@@ -282,7 +282,7 @@ private fun SeccionSinVincular(
         },
         enabled = !cargando && email.isNotBlank() && password.isNotBlank(),
         shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = NexoDeep),
+        colors = nexoBotonPrincipalColors(),
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
