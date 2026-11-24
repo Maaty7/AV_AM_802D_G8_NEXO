@@ -184,7 +184,8 @@ fun HorariosScreen(
 
         ModalBottomSheet(
             onDismissRequest = { mostrarModal = false },
-            sheetState = sheetState
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
@@ -344,6 +345,7 @@ fun HorariosScreen(
     jornadaAEliminar?.let { jornada ->
         AlertDialog(
             onDismissRequest = { jornadaAEliminar = null },
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("¿Eliminar esta jornada?") },
             text = { Text("Se cancelará su supervisión automática.") },
             confirmButton = {

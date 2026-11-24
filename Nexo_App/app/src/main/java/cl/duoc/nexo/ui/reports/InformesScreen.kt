@@ -213,6 +213,7 @@ private fun verInforme(context: Context, informe: ReportEntity) {
 private fun DetalleInformeDialog(informe: ReportEntity, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text(informe.nombreJornada) },
         text = {
             Column {

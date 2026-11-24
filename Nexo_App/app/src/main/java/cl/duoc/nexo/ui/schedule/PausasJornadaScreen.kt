@@ -170,7 +170,8 @@ fun PausasJornadaScreen(
 
         ModalBottomSheet(
             onDismissRequest = { mostrarModal = false },
-            sheetState = sheetState
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(text = "Nueva pausa", fontFamily = NexoFuenteTitulos, fontSize = 18.sp)
@@ -238,6 +239,7 @@ fun PausasJornadaScreen(
     pausaAEliminar?.let { pausa ->
         AlertDialog(
             onDismissRequest = { pausaAEliminar = null },
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("¿Eliminar esta pausa?") },
             text = { Text("El uso de apps en ese tramo volverá a contar en el total de la jornada.") },
             confirmButton = {

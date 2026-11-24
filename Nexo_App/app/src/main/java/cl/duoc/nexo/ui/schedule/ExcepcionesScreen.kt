@@ -166,7 +166,8 @@ fun ExcepcionesScreen(
 
         ModalBottomSheet(
             onDismissRequest = { mostrarModal = false },
-            sheetState = sheetState
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(text = "Nueva excepción", fontFamily = NexoFuenteTitulos, fontSize = 18.sp)
@@ -236,6 +237,7 @@ fun ExcepcionesScreen(
     excepcionAEliminar?.let { excepcion ->
         AlertDialog(
             onDismissRequest = { excepcionAEliminar = null },
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("¿Eliminar esta excepción?") },
             text = { Text("Volverá a generarse informe normalmente en ese rango de fechas.") },
             confirmButton = {

@@ -325,6 +325,7 @@ private fun SeccionCategorias(categorias: Map<String, Long>, apps: List<AppUsage
 private fun DetalleCategoriaDialog(categoria: String, apps: List<AppUsageInfo>, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text(categoria, style = MaterialTheme.typography.titleLarge) },
         text = {
             if (apps.isEmpty()) {
