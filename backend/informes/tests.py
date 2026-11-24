@@ -1,3 +1,4 @@
+import base64
 import datetime
 from unittest.mock import patch
 
@@ -18,6 +19,12 @@ def fecha_hace(dias: int) -> str:
     """Fecha ISO relativa a "hoy" en hora de Chile — nunca una fecha hardcodeada que se vuelva vieja con el tiempo."""
     hoy = timezone.localtime(timezone.now()).date()
     return (hoy - datetime.timedelta(days=dias)).isoformat()
+
+
+def pdf_base64_de_prueba() -> str:
+    """Un PDF mínimo pero válido (empieza con %PDF, pesa unos pocos bytes), en base64."""
+    contenido = b"%PDF-1.4\n%mock pdf de prueba\n%%EOF"
+    return base64.b64encode(contenido).decode("ascii")
 
 
 def payload_informe(**overrides):
@@ -221,3 +228,56 @@ class InformesTests(APITestCase):
         self.assertEqual(Informe.objects.count(), 10)
         self.assertEqual(len(mail.outbox), 0)
         self.assertFalse(Informe.objects.filter(correo_enviado=True).exists())
+
+    def test_informe_con_pdf_envia_el_correo_con_un_adjunto(self):
+        respuesta = self.client.post(
+            self.url, payload_informe(pdf_base64=pdf_base64_de_prueba()), format="json"
+        )
+
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertEqual(len(correo.attachments), 1)
+        nombre_archivo, contenido, tipo = correo.attachments[0]
+        self.assertTrue(nombre_archivo.startswith("Informe_NEXO_"))
+        self.assertTrue(nombre_archivo.endswith(".pdf"))
+        self.assertEqual(tipo, "application/pdf")
+        self.assertTrue(contenido.startswith(b"%PDF"))
+
+    def test_informe_sin_pdf_envia_el_correo_sin_adjuntos(self):
+        respuesta = self.client.post(self.url, payload_informe(), format="json")
+
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(len(mail.outbox[0].attachments), 0)
+
+    def test_informe_con_correo_tiene_una_parte_html(self):
+        respuesta = self.client.post(self.url, payload_informe(), format="json")
+
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        correo = mail.outbox[0]
+        tipos_de_parte = [tipo for _, tipo in correo.alternatives]
+        self.assertIn("text/html", tipos_de_parte)
+
+    def test_archivo_que_no_es_pdf_es_rechazado(self):
+        contenido_falso = base64.b64encode(b"esto no es un pdf, es solo texto").decode("ascii")
+
+        respuesta = self.client.post(
+            self.url, payload_informe(pdf_base64=contenido_falso), format="json"
+        )
+
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Informe.objects.count(), 0)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_pdf_de_mas_de_2mb_es_rechazado(self):
+        contenido_grande = b"%PDF-1.4\n" + (b"A" * (2 * 1024 * 1024 + 1))
+        pdf_demasiado_grande = base64.b64encode(contenido_grande).decode("ascii")
+
+        respuesta = self.client.post(
+            self.url, payload_informe(pdf_base64=pdf_demasiado_grande), format="json"
+        )
+
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Informe.objects.count(), 0)
+        self.assertEqual(len(mail.outbox), 0)

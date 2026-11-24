@@ -5,9 +5,11 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.pdf.PdfDocument
+import android.util.Log
 import androidx.compose.ui.graphics.toArgb
 import cl.duoc.nexo.data.local.entities.ReportEntity
 import cl.duoc.nexo.domain.AppUsageInfo
+import cl.duoc.nexo.domain.esInformeReciente
 import cl.duoc.nexo.domain.parsearAppsUsadas
 import cl.duoc.nexo.ui.theme.NexoMist
 import cl.duoc.nexo.ui.theme.NexoNeon
@@ -17,6 +19,7 @@ import cl.duoc.nexo.ui.theme.NexoSkySoft
 import cl.duoc.nexo.ui.theme.coloresPorCategoria
 import java.io.File
 import java.io.FileOutputStream
+import java.util.Base64
 
 /**
  * Genera un PDF con estilo (tamaño 595x842pt por página) con el detalle de
@@ -39,6 +42,27 @@ object InformePdfGenerator {
     private const val ALTO_PAGINA = 842f
     private const val MARGEN_X = 40f
     private const val MARGEN_INFERIOR = ALTO_PAGINA - 60f // deja espacio para el pie de página
+
+    /**
+     * Para subir junto con el informe: solo vale la pena generar el PDF si
+     * el informe es reciente (de hoy o ayer) — es la misma condición bajo la
+     * que el backend manda el correo de resumen (ver
+     * `informes/correo.py::es_informe_reciente`); a uno viejo nunca se le
+     * va a mandar el correo, así que generar y subir su PDF sería trabajo
+     * (y datos) desperdiciados. Si algo falla generando el PDF, devuelve
+     * `null` y el informe se sube igual, solo que sin adjunto — nunca se
+     * bloquea la subida por esto.
+     */
+    fun generarAdjuntoBase64SiReciente(context: Context, informe: ReportEntity): String? {
+        if (!esInformeReciente(informe.fecha)) return null
+        return try {
+            val archivo = generarOReutilizar(context, informe)
+            Base64.getEncoder().encodeToString(archivo.readBytes())
+        } catch (e: Exception) {
+            Log.w("InformePdfGenerator", "No se pudo generar el PDF del informe ${informe.id}, se sube sin adjunto", e)
+            null
+        }
+    }
 
     /** Devuelve el PDF ya generado en cache si existe para este informe, o lo genera. */
     fun generarOReutilizar(context: Context, informe: ReportEntity): File {

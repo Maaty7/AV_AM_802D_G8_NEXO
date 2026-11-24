@@ -15,6 +15,7 @@ import cl.duoc.nexo.data.remote.ResultadoReenvio
 import cl.duoc.nexo.data.remote.ResultadoSubida
 import cl.duoc.nexo.data.remote.ResultadoVerificacion
 import cl.duoc.nexo.domain.construirJsonInforme
+import cl.duoc.nexo.pdf.InformePdfGenerator
 import kotlinx.coroutines.launch
 
 private const val MENSAJE_ERROR_RED = "No se pudo conectar al servidor. Revisa tu conexión y que el servidor esté corriendo."
@@ -152,7 +153,8 @@ class VincularCuentaViewModel(application: Application) : AndroidViewModel(appli
             var tokenInvalido = false
 
             informes.forEach { informe ->
-                val json = construirJsonInforme(informe, dispositivoUuid, dispositivoNombre)
+                val pdfBase64 = InformePdfGenerator.generarAdjuntoBase64SiReciente(context, informe)
+                val json = construirJsonInforme(informe, dispositivoUuid, dispositivoNombre, pdfBase64)
                 when (NexoApiClient.subirInforme(BuildConfig.BASE_URL, token, json)) {
                     is ResultadoSubida.Exito -> exitosos++
                     is ResultadoSubida.ErrorDeRed -> sinRed = true

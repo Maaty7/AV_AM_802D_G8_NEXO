@@ -15,7 +15,12 @@ import cl.duoc.nexo.data.local.entities.ReportEntity
  * las RESPUESTAS del backend (en NexoApiClient, que solo corre en el
  * dispositivo real, nunca en un test JVM) sí usa org.json sin problema.
  */
-fun construirJsonInforme(informe: ReportEntity, dispositivoUuid: String, dispositivoNombre: String): String {
+fun construirJsonInforme(
+    informe: ReportEntity,
+    dispositivoUuid: String,
+    dispositivoNombre: String,
+    pdfBase64: String? = null
+): String {
     val apps = parsearAppsUsadas(informe.appsUsadas)
     val appsJson = apps.joinToString(",") { app ->
         """{"nombre":${jsonString(app.appName)},"categoria":${jsonString(app.categoria)},"minutos":${app.totalTimeMinutes}}"""
@@ -38,6 +43,9 @@ fun construirJsonInforme(informe: ReportEntity, dispositivoUuid: String, disposi
         append(""""minutos_juegos":${informe.minutosJuegos},""")
         append(""""minutos_otros":${informe.minutosOtros},""")
         append(""""generado_en":${informe.generadoEn},""")
+        if (pdfBase64 != null) {
+            append(""""pdf_base64":${jsonString(pdfBase64)},""")
+        }
         append(""""apps":[$appsJson]""")
         append('}')
     }
