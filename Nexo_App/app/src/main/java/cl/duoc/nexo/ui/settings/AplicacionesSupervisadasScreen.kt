@@ -28,10 +28,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.ui.navigation.PantallaConVolver
 import cl.duoc.nexo.ui.security.VerificarPinDialog
-import cl.duoc.nexo.ui.theme.NexoCoral
-import cl.duoc.nexo.ui.theme.NexoDeep
-import cl.duoc.nexo.ui.theme.NexoMute
+import cl.duoc.nexo.ui.theme.NexoTextoError
+import cl.duoc.nexo.ui.theme.NexoTextoSecundario
 import cl.duoc.nexo.viewmodel.AplicacionesSupervisadasViewModel
+import cl.duoc.nexo.ui.theme.nexoSwitchColors
 
 @Composable
 fun AplicacionesSupervisadasScreen(
@@ -54,7 +54,7 @@ fun AplicacionesSupervisadasScreen(
             ) {
                 Text(
                     text = "Elige qué apps se incluyen en los informes de actividad.",
-                    color = NexoMute,
+                    color = NexoTextoSecundario,
                     fontSize = 12.5.sp,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -62,7 +62,7 @@ fun AplicacionesSupervisadasScreen(
                 viewModel.errorGuardado?.let { mensaje ->
                     Text(
                         text = mensaje,
-                        color = NexoCoral,
+                        color = NexoTextoError,
                         fontSize = 12.5.sp,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
@@ -92,7 +92,7 @@ fun AplicacionesSupervisadasScreen(
                                 onCheckedChange = { nuevoValor ->
                                     accionPendiente = { viewModel.alternar(app.packageName, nuevoValor) }
                                 },
-                                colors = SwitchDefaults.colors(checkedTrackColor = NexoDeep)
+                                colors = nexoSwitchColors()
                             )
                         }
                     }

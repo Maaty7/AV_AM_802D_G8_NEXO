@@ -55,11 +55,15 @@ import cl.duoc.nexo.data.local.entities.ScheduleEntity
 import cl.duoc.nexo.ui.navigation.NexoBottomBar
 import cl.duoc.nexo.ui.navigation.NexoDestinations
 import cl.duoc.nexo.ui.security.VerificarPinDialog
-import cl.duoc.nexo.ui.theme.NexoBorder
-import cl.duoc.nexo.ui.theme.NexoCoral
+import cl.duoc.nexo.ui.theme.NexoBorde
+import cl.duoc.nexo.ui.theme.NexoTextoError
+import cl.duoc.nexo.ui.theme.NexoAcento
 import cl.duoc.nexo.ui.theme.NexoDeep
-import cl.duoc.nexo.ui.theme.NexoMute
+import cl.duoc.nexo.ui.theme.NexoNeon
+import cl.duoc.nexo.ui.theme.NexoTextoSecundario
 import cl.duoc.nexo.viewmodel.HorariosViewModel
+import cl.duoc.nexo.ui.theme.nexoBotonPrincipalColors
+import cl.duoc.nexo.ui.theme.NexoFuenteTitulos
 
 private val diasDisponibles = listOf("LU", "MA", "MI", "JU", "VI", "SA", "DO")
 
@@ -88,10 +92,10 @@ fun HorariosScreen(
                     .fillMaxSize()
                     .padding(top = 32.dp, start = 20.dp, end = 20.dp)
             ) {
-                Text(text = "Mis jornadas", fontFamily = FontFamily.Serif, fontSize = 22.sp)
+                Text(text = "Mis jornadas", fontFamily = NexoFuenteTitulos, fontSize = 22.sp)
                 Text(
                     text = "Períodos de supervisión configurados",
-                    color = NexoMute,
+                    color = NexoTextoSecundario,
                     fontSize = 13.sp,
                     modifier = Modifier.padding(top = 4.dp, bottom = 18.dp)
                 )
@@ -99,7 +103,7 @@ fun HorariosScreen(
                 viewModel.errorGuardado?.let { mensaje ->
                     Text(
                         text = mensaje,
-                        color = NexoCoral,
+                        color = NexoTextoError,
                         fontSize = 12.5.sp,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
@@ -108,7 +112,7 @@ fun HorariosScreen(
                 if (viewModel.jornadas.isEmpty()) {
                     Text(
                         text = "Aún no tienes jornadas configuradas.\nToca \"+ Crear jornada\" para agregar la primera.",
-                        color = NexoMute,
+                        color = NexoTextoSecundario,
                         fontSize = 13.sp,
                         modifier = Modifier
                             .weight(1f)
@@ -157,7 +161,7 @@ fun HorariosScreen(
                         .fillMaxWidth()
                         .padding(vertical = 16.dp)
                 ) {
-                    Text("+ Crear jornada", color = NexoDeep, fontWeight = FontWeight.Bold)
+                    Text("+ Crear jornada", color = NexoAcento, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -180,12 +184,13 @@ fun HorariosScreen(
 
         ModalBottomSheet(
             onDismissRequest = { mostrarModal = false },
-            sheetState = sheetState
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
                     text = if (jornada == null) "Nueva jornada" else "Editar jornada",
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = NexoFuenteTitulos,
                     fontSize = 18.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -226,7 +231,7 @@ fun HorariosScreen(
                     text = "Días",
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = NexoMute,
+                    color = NexoTextoSecundario,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
@@ -237,7 +242,7 @@ fun HorariosScreen(
                             modifier = Modifier
                                 .size(32.dp)
                                 .background(
-                                    if (seleccionado) NexoDeep else MaterialTheme.colorScheme.surfaceVariant,
+                                    if (seleccionado) NexoNeon else MaterialTheme.colorScheme.surfaceVariant,
                                     CircleShape
                                 )
                                 .clickable {
@@ -253,7 +258,7 @@ fun HorariosScreen(
                                 text = dia,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (seleccionado) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (seleccionado) NexoDeep else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -293,7 +298,7 @@ fun HorariosScreen(
                                 jornadaAEliminar = jornada
                                 mostrarModal = false
                             },
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = NexoCoral),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = NexoTextoError),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Eliminar")
@@ -325,7 +330,7 @@ fun HorariosScreen(
                             }
                             mostrarModal = false
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = NexoDeep),
+                        colors = nexoBotonPrincipalColors(),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Guardar")
@@ -340,6 +345,7 @@ fun HorariosScreen(
     jornadaAEliminar?.let { jornada ->
         AlertDialog(
             onDismissRequest = { jornadaAEliminar = null },
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("¿Eliminar esta jornada?") },
             text = { Text("Se cancelará su supervisión automática.") },
             confirmButton = {
@@ -349,7 +355,7 @@ fun HorariosScreen(
                         jornadaAEliminar = null
                     }
                 ) {
-                    Text("Eliminar", color = NexoCoral)
+                    Text("Eliminar", color = NexoTextoError)
                 }
             },
             dismissButton = {
@@ -387,14 +393,14 @@ private fun SelectorDeHora(
             text = etiqueta,
             fontSize = 11.5.sp,
             fontWeight = FontWeight.SemiBold,
-            color = NexoMute,
+            color = NexoTextoSecundario,
             modifier = Modifier.padding(bottom = 6.dp)
         )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
-                .border(1.dp, NexoBorder, RoundedCornerShape(10.dp))
+                .border(1.dp, NexoBorde, RoundedCornerShape(10.dp))
                 .clickable { mostrarDialogo = true }
                 .padding(horizontal = 14.dp, vertical = 14.dp)
         ) {

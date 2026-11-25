@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.NEXO" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+        Fondo NexoNight desde el primer frame: así no hay destello blanco
+        entre que se toca el ícono y aparece el Splash animado de Compose.
+    -->
+    <style name="Theme.NEXO" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/nexo_night</item>
+    </style>
 </resources>

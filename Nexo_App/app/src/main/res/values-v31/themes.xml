@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Android 12+: splash del sistema con el candado (logo_mark) estático
+        sobre NexoNight. El Splash de Compose dibuja el mismo candado, centrado
+        y del mismo tamaño, para empalmar sin salto.
+    -->
+    <style name="Theme.NEXO" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/nexo_night</item>
+        <item name="android:windowSplashScreenBackground">@color/nexo_night</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+    </style>
+</resources>

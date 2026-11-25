@@ -1,6 +1,10 @@
 package cl.duoc.nexo.ui.navigation
 
 import android.net.Uri
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import cl.duoc.nexo.security.SesionDesbloqueo
+import cl.duoc.nexo.ui.components.NexoEaseOut
 import cl.duoc.nexo.ui.home.HomeScreen
 import cl.duoc.nexo.ui.onboarding.ConfigInicialScreen
 import cl.duoc.nexo.ui.permissions.PermisosScreen
@@ -66,7 +71,19 @@ fun NexoNavHost(navController: NavHostController = rememberNavController()) {
     Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
-            startDestination = NexoDestinations.SPLASH
+            startDestination = NexoDestinations.SPLASH,
+            // Solo presentación: fade + escala suave entre pantallas (enter
+            // más lento que exit, curva de salida fuerte).
+            enterTransition = {
+                fadeIn(tween(280, easing = NexoEaseOut)) +
+                    scaleIn(initialScale = 0.97f, animationSpec = tween(280, easing = NexoEaseOut))
+            },
+            exitTransition = { fadeOut(tween(180)) },
+            popEnterTransition = {
+                fadeIn(tween(280, easing = NexoEaseOut)) +
+                    scaleIn(initialScale = 1.02f, animationSpec = tween(280, easing = NexoEaseOut))
+            },
+            popExitTransition = { fadeOut(tween(180)) }
         ) {
             composable(NexoDestinations.SPLASH) {
                 SplashScreen(onDecidido = { existeConfiguracion ->

@@ -26,7 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import cl.duoc.nexo.ui.navigation.PantallaConVolver
 import cl.duoc.nexo.ui.security.VerificarPinDialog
-import cl.duoc.nexo.ui.theme.NexoMute
+import cl.duoc.nexo.ui.theme.NexoTextoSecundario
 import cl.duoc.nexo.viewmodel.EditarCorreoViewModel
 
 @Composable
@@ -50,7 +50,7 @@ fun EditarCorreoScreen(
             ) {
                 Text(
                     text = "A este correo llegarán los informes cuando NEXO tenga envío por correo.",
-                    color = NexoMute,
+                    color = NexoTextoSecundario,
                     fontSize = 12.5.sp,
                     lineHeight = 18.sp,
                     modifier = Modifier.padding(bottom = 22.dp)

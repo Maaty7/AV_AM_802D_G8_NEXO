@@ -118,4 +118,25 @@ class InformeJsonBuilderTest {
         assertEquals(json.count { it == '{' }, json.count { it == '}' })
         assertEquals(json.count { it == '[' }, json.count { it == ']' })
     }
+
+    @Test
+    fun `construirJsonInforme sin pdfBase64 no incluye el campo pdf_base64`() {
+        val informe = informeDePrueba(appsUsadas = "")
+        val json = construirJsonInforme(informe, dispositivoUuid = "abc-123", dispositivoNombre = "Teléfono de Ana")
+
+        assertFalse(json.contains("pdf_base64"))
+    }
+
+    @Test
+    fun `construirJsonInforme con pdfBase64 lo incluye como string`() {
+        val informe = informeDePrueba(appsUsadas = "")
+        val json = construirJsonInforme(
+            informe,
+            dispositivoUuid = "abc-123",
+            dispositivoNombre = "Teléfono de Ana",
+            pdfBase64 = "JVBERi0xLjQK"
+        )
+
+        assertTrue(json.contains("\"pdf_base64\":\"JVBERi0xLjQK\""))
+    }
 }

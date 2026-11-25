@@ -1,9 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generado por design/README: logotipo NEXO (candado). No editar a mano: regenerar desde design/logo/*.svg -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,29 l20,10 v15 c0,12.5 -8.75,21.25 -20,25 c-11.25,-3.75 -20,-12.5 -20,-25 V39 l20,-10 z"/>
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <group android:name="marca" android:scaleX="0.64" android:scaleY="0.64" android:translateX="16.56" android:translateY="20.72">
+    <path android:name="traza" android:pathData="M71.5,34 H80 L85,29 H92" android:strokeColor="#FF38BDF8" android:strokeWidth="3.0" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:name="traza" android:pathData="M71.5,40 H92" android:strokeColor="#FF38BDF8" android:strokeWidth="3.0" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:name="via" android:fillColor="#FF38BDF8" android:pathData="M91.9,29 A2.6,2.6 0 1 0 97.1,29 A2.6,2.6 0 1 0 91.9,29 Z"/>
+    <path android:name="via" android:fillColor="#FF38BDF8" android:pathData="M91.9,40 A2.6,2.6 0 1 0 97.1,40 A2.6,2.6 0 1 0 91.9,40 Z"/>
+    <path android:name="arco" android:pathData="M33,47 V31 A17,17 0 0 1 67,31 V47" android:strokeWidth="9.0" android:strokeLineCap="round" android:strokeLineJoin="round"><aapt:attr name="android:strokeColor"><gradient android:type="linear" android:startX="50" android:startY="14" android:endX="50" android:endY="47" android:startColor="#FF38BDF8" android:endColor="#FFF5FAFF"/></aapt:attr></path>
+    <path android:name="cuerpo" android:fillColor="#FFF5FAFF" android:pathData="M33,44 H67 A13,13 0 0 1 80,57 V77 A13,13 0 0 1 67,90 H33 A13,13 0 0 1 20,77 V57 A13,13 0 0 1 33,44 Z"/>
+    <path android:name="nodo" android:fillColor="#FF38BDF8" android:pathData="M62.4,37 A4.6,4.6 0 1 0 71.6,37 A4.6,4.6 0 1 0 62.4,37 Z"/>
+    <path android:name="ojo" android:fillColor="#FFE4FF3A" android:pathData="M50,56 A6,6 0 0 1 53,67.2 L54,76 H46 L47,67.2 A6,6 0 0 1 50,56 Z"/>
+    <path android:name="ojo_borde" android:pathData="M50,56 A6,6 0 0 1 53,67.2 L54,76 H46 L47,67.2 A6,6 0 0 1 50,56 Z" android:strokeColor="#FF0B2D6B" android:strokeWidth="1.4" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    </group>
 </vector>

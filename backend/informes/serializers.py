@@ -1,3 +1,5 @@
+import base64
+import binascii
 import logging
 
 from rest_framework import serializers
@@ -8,6 +10,8 @@ from .correo import enviar_resumen_informe_por_correo, es_informe_reciente
 from .models import AppUso, Informe
 
 logger = logging.getLogger(__name__)
+
+MAX_PDF_BYTES = 2 * 1024 * 1024  # 2 MB
 
 
 class AppUsoSerializer(serializers.ModelSerializer):
@@ -22,6 +26,11 @@ class InformeEntradaSerializer(serializers.ModelSerializer):
     dispositivo_uuid = serializers.CharField(write_only=True, max_length=64)
     dispositivo_nombre = serializers.CharField(write_only=True, max_length=150)
     apps = AppUsoSerializer(many=True, required=False, default=list)
+    # Opcional: el PDF del informe, codificado en base64 (texto plano, sin
+    # el prefijo "data:application/pdf;base64,"). No se guarda en la base de
+    # datos — solo vive el tiempo de esta request, para adjuntarlo al correo
+    # de resumen si corresponde.
+    pdf_base64 = serializers.CharField(write_only=True, required=False, allow_null=True, allow_blank=True, default=None)
 
     class Meta:
         model = Informe
@@ -42,13 +51,28 @@ class InformeEntradaSerializer(serializers.ModelSerializer):
             "minutos_otros",
             "generado_en",
             "apps",
+            "pdf_base64",
         ]
+
+    def validate_pdf_base64(self, valor):
+        if not valor:
+            return None
+        try:
+            pdf_bytes = base64.b64decode(valor, validate=True)
+        except (binascii.Error, ValueError):
+            raise serializers.ValidationError("pdf_base64 no es un base64 válido.")
+        if not pdf_bytes.startswith(b"%PDF"):
+            raise serializers.ValidationError("El archivo adjunto no es un PDF válido.")
+        if len(pdf_bytes) > MAX_PDF_BYTES:
+            raise serializers.ValidationError("El PDF no puede pesar más de 2 MB.")
+        return pdf_bytes
 
     def create(self, datos_validados):
         apoderado = self.context["request"].user
         uuid = datos_validados.pop("dispositivo_uuid")
         nombre_dispositivo = datos_validados.pop("dispositivo_nombre")
         apps_datos = datos_validados.pop("apps", [])
+        pdf_bytes = datos_validados.pop("pdf_base64", None)
 
         dispositivo, creado = Dispositivo.objects.get_or_create(
             apoderado=apoderado, uuid=uuid, defaults={"nombre": nombre_dispositivo}
@@ -76,7 +100,7 @@ class InformeEntradaSerializer(serializers.ModelSerializer):
         # para siempre, a propósito: nunca se reintenta solo por ser viejo.
         if not informe.correo_enviado and es_informe_reciente(informe.fecha):
             try:
-                enviar_resumen_informe_por_correo(informe, apps_datos)
+                enviar_resumen_informe_por_correo(informe, apps_datos, pdf_bytes)
                 informe.correo_enviado = True
                 informe.save(update_fields=["correo_enviado"])
             except Exception:

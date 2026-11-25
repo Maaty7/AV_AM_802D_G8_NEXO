@@ -11,6 +11,7 @@ import cl.duoc.nexo.data.local.prefs.SesionBackendPrefs
 import cl.duoc.nexo.data.remote.NexoApiClient
 import cl.duoc.nexo.data.remote.ResultadoSubida
 import cl.duoc.nexo.domain.construirJsonInforme
+import cl.duoc.nexo.pdf.InformePdfGenerator
 
 private const val TAG = "SubirInformeWorker"
 
@@ -35,7 +36,8 @@ class SubirInformeWorker(
 
         val dispositivoUuid = SesionBackendPrefs.obtenerODefinirUuid(applicationContext)
         val dispositivoNombre = Build.MODEL ?: "Dispositivo Android"
-        val json = construirJsonInforme(informe, dispositivoUuid, dispositivoNombre)
+        val pdfBase64 = InformePdfGenerator.generarAdjuntoBase64SiReciente(applicationContext, informe)
+        val json = construirJsonInforme(informe, dispositivoUuid, dispositivoNombre, pdfBase64)
 
         return when (val resultado = NexoApiClient.subirInforme(BuildConfig.BASE_URL, token, json)) {
             is ResultadoSubida.Exito -> Result.success()

@@ -5,18 +5,21 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.pdf.PdfDocument
+import android.util.Log
 import androidx.compose.ui.graphics.toArgb
 import cl.duoc.nexo.data.local.entities.ReportEntity
 import cl.duoc.nexo.domain.AppUsageInfo
+import cl.duoc.nexo.domain.esInformeReciente
 import cl.duoc.nexo.domain.parsearAppsUsadas
-import cl.duoc.nexo.ui.theme.NexoCoral
+import cl.duoc.nexo.ui.theme.NexoMist
+import cl.duoc.nexo.ui.theme.NexoNeon
+import cl.duoc.nexo.ui.theme.colorDeCategoria
 import cl.duoc.nexo.ui.theme.NexoDeep
-import cl.duoc.nexo.ui.theme.NexoIce
-import cl.duoc.nexo.ui.theme.NexoInk
-import cl.duoc.nexo.ui.theme.NexoMute
+import cl.duoc.nexo.ui.theme.NexoSkySoft
 import cl.duoc.nexo.ui.theme.coloresPorCategoria
 import java.io.File
 import java.io.FileOutputStream
+import java.util.Base64
 
 /**
  * Genera un PDF con estilo (tamaño 595x842pt por página) con el detalle de
@@ -39,6 +42,27 @@ object InformePdfGenerator {
     private const val ALTO_PAGINA = 842f
     private const val MARGEN_X = 40f
     private const val MARGEN_INFERIOR = ALTO_PAGINA - 60f // deja espacio para el pie de página
+
+    /**
+     * Para subir junto con el informe: solo vale la pena generar el PDF si
+     * el informe es reciente (de hoy o ayer) — es la misma condición bajo la
+     * que el backend manda el correo de resumen (ver
+     * `informes/correo.py::es_informe_reciente`); a uno viejo nunca se le
+     * va a mandar el correo, así que generar y subir su PDF sería trabajo
+     * (y datos) desperdiciados. Si algo falla generando el PDF, devuelve
+     * `null` y el informe se sube igual, solo que sin adjunto — nunca se
+     * bloquea la subida por esto.
+     */
+    fun generarAdjuntoBase64SiReciente(context: Context, informe: ReportEntity): String? {
+        if (!esInformeReciente(informe.fecha)) return null
+        return try {
+            val archivo = generarOReutilizar(context, informe)
+            Base64.getEncoder().encodeToString(archivo.readBytes())
+        } catch (e: Exception) {
+            Log.w("InformePdfGenerator", "No se pudo generar el PDF del informe ${informe.id}, se sube sin adjunto", e)
+            null
+        }
+    }
 
     /** Devuelve el PDF ya generado en cache si existe para este informe, o lo genera. */
     fun generarOReutilizar(context: Context, informe: ReportEntity): File {
@@ -106,9 +130,12 @@ object InformePdfGenerator {
 
         val paintFondo = Paint().apply { color = NexoDeep.toArgb() }
         canvas.drawRect(0f, 0f, ANCHO_PAGINA, altoEncabezado, paintFondo)
+        // Filete neón bajo la banda: el único acento de la marca en el informe.
+        val paintAcento = Paint().apply { color = NexoNeon.toArgb() }
+        canvas.drawRect(0f, altoEncabezado - 4f, ANCHO_PAGINA, altoEncabezado, paintAcento)
 
         val paintTitulo = Paint().apply {
-            color = android.graphics.Color.WHITE
+            color = NexoMist.toArgb()
             textSize = 32f
             isFakeBoldText = true
             isAntiAlias = true
@@ -116,7 +143,7 @@ object InformePdfGenerator {
         canvas.drawText("NEXO", MARGEN_X, 55f, paintTitulo)
 
         val paintSubtitulo = Paint().apply {
-            color = android.graphics.Color.WHITE
+            color = NexoMist.toArgb()
             textSize = 14f
             alpha = 220
             isAntiAlias = true
@@ -126,22 +153,22 @@ object InformePdfGenerator {
         return altoEncabezado + 36f
     }
 
-    /** Card NexoIce con nombre, fecha, horario y días de la jornada. Devuelve el y donde sigue el contenido. */
+    /** Card NexoSkySoft con nombre, fecha, horario y días de la jornada. Devuelve el y donde sigue el contenido. */
     private fun dibujarBloqueJornada(canvas: Canvas, informe: ReportEntity, yInicial: Float): Float {
         val alturaBloque = 116f
         val rect = RectF(MARGEN_X, yInicial, ANCHO_PAGINA - MARGEN_X, yInicial + alturaBloque)
 
-        val paintFondo = Paint().apply { color = NexoIce.toArgb(); isAntiAlias = true }
+        val paintFondo = Paint().apply { color = NexoSkySoft.toArgb(); isAntiAlias = true }
         canvas.drawRoundRect(rect, 14f, 14f, paintFondo)
 
         val paintNombre = Paint().apply {
-            color = NexoInk.toArgb()
+            color = NexoDeep.toArgb()
             textSize = 17f
             isFakeBoldText = true
             isAntiAlias = true
         }
         val paintDato = Paint().apply {
-            color = NexoMute.toArgb()
+            color = NexoDeep.copy(alpha = 0.65f).toArgb()
             textSize = 12.5f
             isAntiAlias = true
         }
@@ -172,7 +199,7 @@ object InformePdfGenerator {
         canvas.drawText(formatoDuracion(informe.minutosTotales), MARGEN_X, yNumero, paintNumero)
 
         val paintEtiqueta = Paint().apply {
-            color = NexoMute.toArgb()
+            color = NexoDeep.copy(alpha = 0.65f).toArgb()
             textSize = 12.5f
             isAntiAlias = true
         }
@@ -194,7 +221,7 @@ object InformePdfGenerator {
         ).filter { it.second > 0 }.sortedByDescending { it.second }
 
         val paintTituloSeccion = Paint().apply {
-            color = NexoMute.toArgb()
+            color = NexoDeep.copy(alpha = 0.65f).toArgb()
             textSize = 12.5f
             isFakeBoldText = true
             isAntiAlias = true
@@ -203,7 +230,7 @@ object InformePdfGenerator {
 
         if (categorias.isEmpty()) {
             val paintVacio = Paint().apply {
-                color = NexoMute.toArgb()
+                color = NexoDeep.copy(alpha = 0.65f).toArgb()
                 textSize = 12.5f
                 isAntiAlias = true
             }
@@ -220,20 +247,20 @@ object InformePdfGenerator {
         val alturaFila = 30f
 
         val paintNombreCategoria = Paint().apply {
-            color = NexoInk.toArgb()
+            color = NexoDeep.toArgb()
             textSize = 11.5f
             isAntiAlias = true
         }
         val paintMinutos = Paint().apply {
-            color = NexoMute.toArgb()
+            color = NexoDeep.copy(alpha = 0.65f).toArgb()
             textSize = 11f
             isAntiAlias = true
         }
-        val paintPistaBarra = Paint().apply { color = NexoIce.toArgb(); isAntiAlias = true }
+        val paintPistaBarra = Paint().apply { color = NexoSkySoft.toArgb(); isAntiAlias = true }
 
         var y = yInicial + 24f
         categorias.forEach { (nombre, minutos) ->
-            val colorCategoria = (coloresPorCategoria[nombre] ?: NexoCoral).toArgb()
+            val colorCategoria = colorDeCategoria(nombre).toArgb()
             val proporcion = minutos / maxMinutos
             val anchoBarra = (barraAnchoMax * proporcion).coerceAtLeast(6f)
 
@@ -262,7 +289,7 @@ object InformePdfGenerator {
 
     private fun dibujarTituloAplicaciones(canvas: Canvas, y: Float, continuacion: Boolean = false): Float {
         val paint = Paint().apply {
-            color = NexoMute.toArgb()
+            color = NexoDeep.copy(alpha = 0.65f).toArgb()
             textSize = 12.5f
             isFakeBoldText = true
             isAntiAlias = true
@@ -274,7 +301,7 @@ object InformePdfGenerator {
 
     private fun dibujarSinApps(canvas: Canvas, y: Float) {
         val paint = Paint().apply {
-            color = NexoMute.toArgb()
+            color = NexoDeep.copy(alpha = 0.65f).toArgb()
             textSize = 12.5f
             isAntiAlias = true
         }
@@ -299,12 +326,12 @@ object InformePdfGenerator {
         val anchoMaxNombre = ANCHO_PAGINA - MARGEN_X - xNombre - 55f
 
         val paintNombre = Paint().apply {
-            color = NexoInk.toArgb()
+            color = NexoDeep.toArgb()
             textSize = 11.5f
             isAntiAlias = true
         }
         val paintMinutos = Paint().apply {
-            color = NexoMute.toArgb()
+            color = NexoDeep.copy(alpha = 0.65f).toArgb()
             textSize = 11f
             isAntiAlias = true
             textAlign = Paint.Align.RIGHT
@@ -315,7 +342,7 @@ object InformePdfGenerator {
         while (i < apps.size && y + alturaFila <= yLimite) {
             val app = apps[i]
             val baseline = y + alturaFila - 7f
-            val colorPunto = (coloresPorCategoria[app.categoria] ?: NexoCoral).toArgb()
+            val colorPunto = colorDeCategoria(app.categoria).toArgb()
 
             canvas.drawCircle(
                 MARGEN_X + diametroPunto / 2f,
@@ -346,7 +373,7 @@ object InformePdfGenerator {
 
     private fun dibujarPiePagina(canvas: Canvas) {
         val paint = Paint().apply {
-            color = NexoMute.toArgb()
+            color = NexoDeep.copy(alpha = 0.65f).toArgb()
             textSize = 9.5f
             isAntiAlias = true
             textAlign = Paint.Align.CENTER
