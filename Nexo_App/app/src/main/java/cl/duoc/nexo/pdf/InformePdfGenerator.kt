@@ -7,14 +7,20 @@ import android.graphics.RectF
 import android.graphics.pdf.PdfDocument
 import android.util.Log
 import androidx.compose.ui.graphics.toArgb
+import cl.duoc.nexo.data.local.database.NexoDatabase
 import cl.duoc.nexo.data.local.entities.ReportEntity
 import cl.duoc.nexo.domain.AppUsageInfo
+import cl.duoc.nexo.domain.ComparacionJornada
+import cl.duoc.nexo.domain.ComparacionValor
+import cl.duoc.nexo.domain.TendenciaComparacion
+import cl.duoc.nexo.domain.calcularComparacionJornada
 import cl.duoc.nexo.domain.esInformeReciente
 import cl.duoc.nexo.domain.parsearAppsUsadas
 import cl.duoc.nexo.ui.theme.NexoMist
 import cl.duoc.nexo.ui.theme.NexoNeon
 import cl.duoc.nexo.ui.theme.colorDeCategoria
 import cl.duoc.nexo.ui.theme.NexoDeep
+import cl.duoc.nexo.ui.theme.NexoSky
 import cl.duoc.nexo.ui.theme.NexoSkySoft
 import cl.duoc.nexo.ui.theme.coloresPorCategoria
 import java.io.File
@@ -71,6 +77,9 @@ object InformePdfGenerator {
         if (archivo.exists()) return archivo
 
         val apps = parsearAppsUsadas(informe.appsUsadas).sortedByDescending { it.totalTimeMinutes }
+        val informeAnterior = NexoDatabase.getInstance(context).reportDao()
+            .obtenerAnteriorDeLaMismaJornada(informe.scheduleId, informe.fecha)
+        val comparacion = calcularComparacionJornada(informe, informeAnterior)
 
         val documento = PdfDocument()
         var numeroPagina = 1
@@ -82,6 +91,17 @@ object InformePdfGenerator {
         y = dibujarBloqueJornada(canvas, informe, y)
         y = dibujarTiempoTotal(canvas, informe, y)
         y = dibujarUsoPorCategoria(canvas, informe, y) + 10f
+
+        // Comparación con la jornada anterior: si no alcanza completa, pasa a una página nueva.
+        if (y + alturaEstimadaComparacion(comparacion) > MARGEN_INFERIOR) {
+            documento.finishPage(pagina)
+            numeroPagina++
+            pagina = documento.startPage(paginaInfo(numeroPagina))
+            canvas = pagina.canvas
+            canvas.drawColor(android.graphics.Color.WHITE)
+            y = MARGEN_X + 20f
+        }
+        y = dibujarComparacionJornada(canvas, comparacion, y) + 10f
 
         // Título de la sección de apps: si no alcanza ni el título, pasa a una página nueva.
         if (y + 40f > MARGEN_INFERIOR) {
@@ -285,6 +305,92 @@ object InformePdfGenerator {
         }
 
         return y
+    }
+
+    /** Altura que va a ocupar [dibujarComparacionJornada] — para decidir si hay que pasar de página antes de dibujarla. */
+    private fun alturaEstimadaComparacion(comparacion: ComparacionJornada?): Float {
+        if (comparacion == null) return 24f + 26f
+        return 24f + 20f + comparacion.categorias.size * 20f
+    }
+
+    /** Sección "Comparación con la jornada anterior": tiempo total y cada categoría vs. el informe previo de la misma jornada. Devuelve el y donde sigue el contenido. */
+    private fun dibujarComparacionJornada(canvas: Canvas, comparacion: ComparacionJornada?, yInicial: Float): Float {
+        val paintTituloSeccion = Paint().apply {
+            color = NexoDeep.copy(alpha = 0.65f).toArgb()
+            textSize = 12.5f
+            isFakeBoldText = true
+            isAntiAlias = true
+        }
+        canvas.drawText("COMPARACIÓN CON LA JORNADA ANTERIOR", MARGEN_X, yInicial, paintTituloSeccion)
+
+        if (comparacion == null) {
+            val paintVacio = Paint().apply {
+                color = NexoDeep.copy(alpha = 0.65f).toArgb()
+                textSize = 12.5f
+                isAntiAlias = true
+            }
+            canvas.drawText("Sin jornada anterior para comparar.", MARGEN_X, yInicial + 26f, paintVacio)
+            return yInicial + 26f
+        }
+
+        var y = yInicial + 24f
+        y = dibujarFilaComparacion(canvas, "Tiempo total", comparacion.total, y)
+        comparacion.categorias.forEach { categoria ->
+            y = dibujarFilaComparacion(canvas, categoria.nombre, categoria.valor, y)
+        }
+        return y
+    }
+
+    /** Fila "nombre … actual min (antes anterior min) … cambio" de la comparación. Devuelve el y de la fila siguiente. */
+    private fun dibujarFilaComparacion(canvas: Canvas, nombre: String, valor: ComparacionValor, yInicial: Float): Float {
+        val alturaFila = 20f
+        val baseline = yInicial + alturaFila - 6f
+
+        val paintNombre = Paint().apply {
+            color = NexoDeep.toArgb()
+            textSize = 11.5f
+            isAntiAlias = true
+        }
+        val paintDato = Paint().apply {
+            color = NexoDeep.copy(alpha = 0.65f).toArgb()
+            textSize = 11f
+            isAntiAlias = true
+        }
+        val paintCambio = Paint().apply {
+            color = colorDeTendencia(valor.tendencia).toArgb()
+            textSize = 11f
+            isFakeBoldText = true
+            isAntiAlias = true
+            textAlign = Paint.Align.RIGHT
+        }
+
+        canvas.drawText(nombre, MARGEN_X, baseline, paintNombre)
+        canvas.drawText("${valor.actual} min (antes ${valor.anterior} min)", MARGEN_X + 150f, baseline, paintDato)
+        canvas.drawText(textoCambio(valor), ANCHO_PAGINA - MARGEN_X, baseline, paintCambio)
+
+        return yInicial + alturaFila
+    }
+
+    /** Color de marca para cada tendencia — además de la flecha en [textoCambio], nunca el único indicio del cambio. */
+    private fun colorDeTendencia(tendencia: TendenciaComparacion) = when (tendencia) {
+        TendenciaComparacion.SUBIO -> NexoDeep
+        TendenciaComparacion.BAJO -> NexoSky
+        TendenciaComparacion.IGUAL -> NexoDeep.copy(alpha = 0.65f)
+    }
+
+    private fun textoCambio(valor: ComparacionValor): String {
+        val minutos = valor.diferenciaMinutos
+        return when (valor.tendencia) {
+            TendenciaComparacion.IGUAL -> "Sin cambios"
+            TendenciaComparacion.SUBIO -> {
+                val porcentaje = valor.porcentaje?.let { " (+${"%.0f".format(it)}%)" } ?: ""
+                "↑ +$minutos min$porcentaje"
+            }
+            TendenciaComparacion.BAJO -> {
+                val porcentaje = valor.porcentaje?.let { " (${"%.0f".format(it)}%)" } ?: ""
+                "↓ $minutos min$porcentaje"
+            }
+        }
     }
 
     private fun dibujarTituloAplicaciones(canvas: Canvas, y: Float, continuacion: Boolean = false): Float {
