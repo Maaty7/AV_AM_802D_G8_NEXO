@@ -42,11 +42,15 @@ Proyecto Capstone de Ingeniería en Informática (DuocUC).
 - **Verificación en dos pasos por correo**: al registrarse o iniciar sesión
   en el backend, se envía un código de 6 dígitos por correo (vence a los 10
   minutos, máximo 5 intentos) antes de entregar la sesión.
-- **Correo de resumen del informe**: al sincronizar un informe de una
-  jornada reciente (de hoy o de ayer), el apoderado recibe un correo con el
-  resumen (tiempo total, por categoría y apps más usadas); los informes más
-  antiguos no generan correo, para no saturar la bandeja al sincronizar un
-  historial completo.
+- **Correo de resumen del informe, con el PDF adjunto**: al sincronizar un
+  informe de una jornada reciente (de hoy o de ayer), el apoderado recibe un
+  correo en HTML (con la misma paleta de la app) con el resumen (tiempo
+  total, por categoría y apps más usadas) y el mismo PDF que se puede
+  descargar desde la app, adjunto; los informes más antiguos no generan
+  correo, para no saturar la bandeja al sincronizar un historial completo.
+- **Rediseño visual**: paleta de marca (NexoDeep/NexoSky/NexoNeon), logo
+  propio, tipografía Inter y splash animado — coherente entre tema claro y
+  oscuro y entre la app y el correo de resumen.
 
 ## Stack y arquitectura
 
@@ -72,7 +76,7 @@ AV_AM_802D_G8_NEXO/
 ```
 ui/            Pantallas Compose, organizadas por sección
                (onboarding, security, permissions, home, schedule,
-               stats, settings, reports, navigation, theme)
+               stats, settings, reports, navigation, theme, components)
 viewmodel/     Un ViewModel por pantalla (MVVM)
 data/local/    Entidades y DAOs de Room + NexoDatabase + SharedPreferences
 data/remote/   Cliente HTTP hacia el backend (HttpURLConnection + org.json)
@@ -83,6 +87,10 @@ work/          WorkManager: informe automático y subida al backend
 pdf/           Generación de los informes en PDF
 utils/         Utilidades (hash del PIN, feriados de Chile)
 ```
+
+`Nexo_App/design/` guarda los assets del rediseño visual (logo en SVG,
+mockups y los scripts que los generan) — no se compila con la app, es
+material de referencia de diseño.
 
 ## Cómo instalar y correr la app
 

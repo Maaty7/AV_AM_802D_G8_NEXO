@@ -5,8 +5,9 @@ jornada que hoy genera la app Android (lo mismo que guarda `ReportEntity.kt`
 en Room), con cuentas de apoderado y autenticación por token.
 
 Incluye verificación en dos pasos por correo (código de 6 dígitos) al
-registrarse o iniciar sesión, y un correo de resumen automático cuando se
-sincroniza un informe de jornada reciente.
+registrarse o iniciar sesión, y un correo de resumen automático (con el PDF
+del informe adjunto, si la app lo mandó) cuando se sincroniza un informe de
+jornada reciente.
 
 **Fuera de alcance (a propósito):** recuperación de PIN, analítica,
 despliegue en la nube. El PIN de la app **nunca** se envía al servidor.
@@ -202,7 +203,8 @@ completo (incluida la lista de apps) en vez de crear uno nuevo.
     {"nombre": "Classroom", "categoria": "Educación", "minutos": 60},
     {"nombre": "WhatsApp", "categoria": "Comunicación", "minutos": 10},
     {"nombre": "YouTube", "categoria": "Entretenimiento", "minutos": 20}
-  ]
+  ],
+  "pdf_base64": "JVBERi0xLjQK..."
 }
 ```
 
@@ -210,5 +212,23 @@ completo (incluida la lista de apps) en vez de crear uno nuevo.
 la app: Educación, Comunicación, Redes Sociales, Entretenimiento, Juegos, Otros.
 `generado_en` es epoch-millis, igual que `ReportEntity.generadoEn` en la app.
 
+`pdf_base64` es opcional (texto plano, el PDF del informe codificado en
+base64, sin el prefijo `data:application/pdf;base64,`). Si viene, debe
+decodificar a un archivo que empiece con `%PDF` y pese como máximo 2 MB —
+si no, la request completa se rechaza con `400`. No se guarda en la base de
+datos: solo se usa, si el informe es de hoy o de ayer, para adjuntarlo al
+correo de resumen (ver más abajo).
+
 Cada apoderado solo ve sus propios informes — el filtro es siempre por
 `dispositivo__apoderado = request.user`, nunca por un id que venga del cliente.
+
+### Correo de resumen del informe
+
+Cuando un informe nuevo (o uno existente que todavía no se había reenviado
+con éxito) es de hoy o de ayer, se le manda al apoderado un correo
+(`EmailMultiAlternatives`: texto plano + HTML) con el resumen — tiempo
+total, minutos por categoría y top 5 apps — y, si vino `pdf_base64` en la
+request, el mismo PDF adjunto como `Informe_NEXO_<jornada>_<fecha>.pdf`. Un
+informe más antiguo que se sincroniza nunca genera este correo (ni con PDF
+ni sin él), para no saturar la bandeja al subir de golpe todo un historial
+viejo.
