@@ -39,4 +39,13 @@ interface ReportDao {
      */
     @Query("SELECT * FROM reports WHERE scheduleId = :scheduleId AND fecha < :fecha ORDER BY fecha DESC LIMIT 1")
     fun obtenerAnteriorDeLaMismaJornada(scheduleId: Int, fecha: String): ReportEntity?
+
+    /**
+     * Informes de la MISMA jornada (mismo [scheduleId]) con fecha entre
+     * [desde] y [hasta], ambos inclusive — para sumarlos en "Esta semana vs.
+     * semana anterior" del PDF. Fechas en formato "yyyy-MM-dd". Sin
+     * `suspend`, por la misma razón que [obtenerAnteriorDeLaMismaJornada].
+     */
+    @Query("SELECT * FROM reports WHERE scheduleId = :scheduleId AND fecha BETWEEN :desde AND :hasta")
+    fun obtenerEntreFechas(scheduleId: Int, desde: String, hasta: String): List<ReportEntity>
 }

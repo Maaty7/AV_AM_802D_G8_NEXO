@@ -29,11 +29,11 @@ data class ComparacionJornada(
     val categorias: List<ComparacionCategoria>
 )
 
-private val NOMBRES_CATEGORIAS = listOf(
+internal val NOMBRES_CATEGORIAS = listOf(
     "Educación", "Comunicación", "Redes Sociales", "Entretenimiento", "Juegos", "Otros"
 )
 
-private fun minutosPorCategoria(informe: ReportEntity): List<Long> = listOf(
+internal fun minutosPorCategoria(informe: ReportEntity): List<Long> = listOf(
     informe.minutosEducacion,
     informe.minutosComunicacion,
     informe.minutosRedesSociales,

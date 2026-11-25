@@ -11,9 +11,12 @@ import cl.duoc.nexo.data.local.database.NexoDatabase
 import cl.duoc.nexo.data.local.entities.ReportEntity
 import cl.duoc.nexo.domain.AppUsageInfo
 import cl.duoc.nexo.domain.ComparacionJornada
+import cl.duoc.nexo.domain.ComparacionSemanal
 import cl.duoc.nexo.domain.ComparacionValor
 import cl.duoc.nexo.domain.TendenciaComparacion
 import cl.duoc.nexo.domain.calcularComparacionJornada
+import cl.duoc.nexo.domain.calcularComparacionSemanal
+import cl.duoc.nexo.domain.calcularRangosComparacionSemanal
 import cl.duoc.nexo.domain.esInformeReciente
 import cl.duoc.nexo.domain.parsearAppsUsadas
 import cl.duoc.nexo.ui.theme.NexoMist
@@ -25,6 +28,7 @@ import cl.duoc.nexo.ui.theme.NexoSkySoft
 import cl.duoc.nexo.ui.theme.coloresPorCategoria
 import java.io.File
 import java.io.FileOutputStream
+import java.time.LocalDate
 import java.util.Base64
 
 /**
@@ -77,9 +81,18 @@ object InformePdfGenerator {
         if (archivo.exists()) return archivo
 
         val apps = parsearAppsUsadas(informe.appsUsadas).sortedByDescending { it.totalTimeMinutes }
-        val informeAnterior = NexoDatabase.getInstance(context).reportDao()
-            .obtenerAnteriorDeLaMismaJornada(informe.scheduleId, informe.fecha)
+        val reportDao = NexoDatabase.getInstance(context).reportDao()
+        val informeAnterior = reportDao.obtenerAnteriorDeLaMismaJornada(informe.scheduleId, informe.fecha)
         val comparacion = calcularComparacionJornada(informe, informeAnterior)
+
+        val rangos = calcularRangosComparacionSemanal(LocalDate.parse(informe.fecha))
+        val informesEstaSemana = reportDao.obtenerEntreFechas(
+            informe.scheduleId, rangos.estaSemana.desde.toString(), rangos.estaSemana.hasta.toString()
+        )
+        val informesSemanaAnterior = reportDao.obtenerEntreFechas(
+            informe.scheduleId, rangos.semanaAnterior.desde.toString(), rangos.semanaAnterior.hasta.toString()
+        )
+        val comparacionSemanal = calcularComparacionSemanal(informesEstaSemana, informesSemanaAnterior)
 
         val documento = PdfDocument()
         var numeroPagina = 1
@@ -92,8 +105,8 @@ object InformePdfGenerator {
         y = dibujarTiempoTotal(canvas, informe, y)
         y = dibujarUsoPorCategoria(canvas, informe, y) + 10f
 
-        // Comparación con la jornada anterior: si no alcanza completa, pasa a una página nueva.
-        if (y + alturaEstimadaComparacion(comparacion) > MARGEN_INFERIOR) {
+        // Comparación con la jornada anterior y con la semana anterior: si no alcanza completa, pasa a una página nueva.
+        if (y + alturaEstimadaComparacion(comparacion, comparacionSemanal) > MARGEN_INFERIOR) {
             documento.finishPage(pagina)
             numeroPagina++
             pagina = documento.startPage(paginaInfo(numeroPagina))
@@ -101,7 +114,7 @@ object InformePdfGenerator {
             canvas.drawColor(android.graphics.Color.WHITE)
             y = MARGEN_X + 20f
         }
-        y = dibujarComparacionJornada(canvas, comparacion, y) + 10f
+        y = dibujarComparacionJornada(canvas, comparacion, comparacionSemanal, y) + 10f
 
         // Título de la sección de apps: si no alcanza ni el título, pasa a una página nueva.
         if (y + 40f > MARGEN_INFERIOR) {
@@ -307,37 +320,67 @@ object InformePdfGenerator {
         return y
     }
 
-    /** Altura que va a ocupar [dibujarComparacionJornada] — para decidir si hay que pasar de página antes de dibujarla. */
-    private fun alturaEstimadaComparacion(comparacion: ComparacionJornada?): Float {
-        if (comparacion == null) return 24f + 26f
-        return 24f + 20f + comparacion.categorias.size * 20f
+    /** Altura que va a ocupar [dibujarComparacionJornada] (jornada anterior + semana anterior) — para decidir si hay que pasar de página antes de dibujarla. */
+    private fun alturaEstimadaComparacion(comparacion: ComparacionJornada?, comparacionSemanal: ComparacionSemanal?): Float {
+        val alturaJornada = if (comparacion == null) 24f + 26f else 24f + 20f + comparacion.categorias.size * 20f
+        val alturaSemanal = 18f + if (comparacionSemanal == null) 24f + 22f else 24f + 20f + comparacionSemanal.categorias.size * 20f
+        return alturaJornada + alturaSemanal
     }
 
-    /** Sección "Comparación con la jornada anterior": tiempo total y cada categoría vs. el informe previo de la misma jornada. Devuelve el y donde sigue el contenido. */
-    private fun dibujarComparacionJornada(canvas: Canvas, comparacion: ComparacionJornada?, yInicial: Float): Float {
+    /**
+     * Sección "Comparación con la jornada anterior": primero tiempo total y
+     * cada categoría vs. el informe previo de la misma jornada, y debajo,
+     * en el mismo bloque, "Esta semana vs. semana anterior" (suma de
+     * informes de la misma jornada, lunes a la fecha, contra el mismo tramo
+     * de la semana previa). Devuelve el y donde sigue el contenido.
+     */
+    private fun dibujarComparacionJornada(
+        canvas: Canvas,
+        comparacion: ComparacionJornada?,
+        comparacionSemanal: ComparacionSemanal?,
+        yInicial: Float
+    ): Float {
         val paintTituloSeccion = Paint().apply {
             color = NexoDeep.copy(alpha = 0.65f).toArgb()
             textSize = 12.5f
             isFakeBoldText = true
             isAntiAlias = true
         }
+        val paintVacio = Paint().apply {
+            color = NexoDeep.copy(alpha = 0.65f).toArgb()
+            textSize = 12.5f
+            isAntiAlias = true
+        }
+
         canvas.drawText("COMPARACIÓN CON LA JORNADA ANTERIOR", MARGEN_X, yInicial, paintTituloSeccion)
 
-        if (comparacion == null) {
-            val paintVacio = Paint().apply {
-                color = NexoDeep.copy(alpha = 0.65f).toArgb()
-                textSize = 12.5f
-                isAntiAlias = true
-            }
+        var y = if (comparacion == null) {
             canvas.drawText("Sin jornada anterior para comparar.", MARGEN_X, yInicial + 26f, paintVacio)
-            return yInicial + 26f
+            yInicial + 26f
+        } else {
+            var yFilas = yInicial + 24f
+            yFilas = dibujarFilaComparacion(canvas, "Tiempo total", comparacion.total, yFilas)
+            comparacion.categorias.forEach { categoria ->
+                yFilas = dibujarFilaComparacion(canvas, categoria.nombre, categoria.valor, yFilas)
+            }
+            yFilas
         }
 
-        var y = yInicial + 24f
-        y = dibujarFilaComparacion(canvas, "Tiempo total", comparacion.total, y)
-        comparacion.categorias.forEach { categoria ->
-            y = dibujarFilaComparacion(canvas, categoria.nombre, categoria.valor, y)
+        y += 18f
+        canvas.drawText("ESTA SEMANA VS. SEMANA ANTERIOR", MARGEN_X, y, paintTituloSeccion)
+
+        y = if (comparacionSemanal == null) {
+            canvas.drawText("Sin datos de la semana anterior.", MARGEN_X, y + 26f, paintVacio)
+            y + 26f
+        } else {
+            var yFilas = y + 24f
+            yFilas = dibujarFilaComparacion(canvas, "Tiempo total", comparacionSemanal.total, yFilas)
+            comparacionSemanal.categorias.forEach { categoria ->
+                yFilas = dibujarFilaComparacion(canvas, categoria.nombre, categoria.valor, yFilas)
+            }
+            yFilas
         }
+
         return y
     }
 
